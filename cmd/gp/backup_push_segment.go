@@ -67,7 +67,7 @@ var (
 				permanent, verifyPageChecksums,
 				fullBackup, storeAllCorruptBlocks,
 				tarBallComposerType, greenplum.NewSegDeltaBackupConfigurator(deltaBaseSelector),
-				userData, viper.GetBool(conf.WithoutFilesMetadataSetting))
+				userData, viper.GetBool(conf.WithoutFilesMetadataSetting), false)
 
 			backupHandler, err := greenplum.NewSegBackupHandler(arguments)
 			tracelog.ErrorLogger.FatalOnError(err)
