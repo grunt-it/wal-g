@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"strings"
@@ -28,11 +29,11 @@ func TestHandleDefaultBackupList(t *testing.T) {
 	t.Run("print correct backups in correct order", func(t *testing.T) {
 		folder := memory.NewFolder("", memory.NewKVS(memory.WithCustomTime(curTimeFunc)))
 		curTime = time.Unix(1690000000, 0)
-		_ = folder.PutObject("base_111_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "base_111_backup_stop_sentinel.json", &bytes.Buffer{})
 		curTime = curTime.Add(time.Second)
-		_ = folder.PutObject("base_222_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "base_222_backup_stop_sentinel.json", &bytes.Buffer{})
 		curTime = curTime.Add(time.Second)
-		_ = folder.PutObject("base_333_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "base_333_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		rescueStdout := os.Stdout
 		r, w, _ := os.Pipe()
@@ -85,8 +86,8 @@ func TestHandleDefaultBackupList(t *testing.T) {
 		require.NoError(t, err)
 
 		curTime = time.Unix(1690000000, 0)
-		_ = memStorages["storage_1"].PutObject("base_111_backup_stop_sentinel.json", &bytes.Buffer{})
-		_ = memStorages["storage_2"].PutObject("base_111_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = memStorages["storage_1"].PutObject(context.Background(), "base_111_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = memStorages["storage_2"].PutObject(context.Background(), "base_111_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		rescueStdout := os.Stdout
 		r, w, _ := os.Pipe()

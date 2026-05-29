@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,7 +59,7 @@ func DownloadFile(reader StorageFolderReader, filename, ext string, writeCloser 
 }
 
 func TryDownloadFile(reader StorageFolderReader, path string) (fileReader io.ReadCloser, exists bool, err error) {
-	fileReader, err = reader.ReadObject(path)
+	fileReader, err = reader.ReadObject(context.Background(), path)
 	if err == nil {
 		exists = true
 		return

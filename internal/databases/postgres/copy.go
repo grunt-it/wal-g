@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"path"
 	"strings"
 
@@ -29,7 +30,7 @@ func BackupCopyingInfo(backup Backup, from storage.Folder, to storage.Folder) ([
 	tracelog.InfoLogger.Print("Collecting backup files...")
 	var backupPrefix = path.Join(utility.BaseBackupPath, backup.Name)
 
-	var objects, err = storage.ListFolderRecursively(from)
+	var objects, err = storage.ListFolderRecursively(context.Background(), from)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func HistoryCopyingInfo(backup Backup, from storage.Folder, to storage.Folder, w
 
 	tracelog.DebugLogger.Print("getLastWalFilename not failed!")
 
-	objects, err := storage.ListFolderRecursively(fromWalFolder)
+	objects, err := storage.ListFolderRecursively(context.Background(), fromWalFolder)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func GetWalFileName(filename string) string {
 }
 
 func WildcardInfo(from storage.Folder, to storage.Folder) ([]copy.InfoProvider, error) {
-	objects, err := storage.ListFolderRecursively(from)
+	objects, err := storage.ListFolderRecursively(context.Background(), from)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -151,7 +152,7 @@ func downloadAndDecompressFile(backup Backup, decompressor compression.Decompres
 
 func GetPartitionedBackupFileNames(backup Backup, decompressor compression.Decompressor) ([][]string, error) {
 	// list all files in backup folder:
-	files, _, err := backup.Folder.GetSubFolder(backup.Name).ListFolder()
+	files, _, err := backup.Folder.GetSubFolder(backup.Name).ListFolder(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("cannot list files in backup folder '%s' due to: %w", backup.Folder.GetPath(), err)
 	}

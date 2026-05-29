@@ -1,6 +1,7 @@
 package storagetools
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -73,10 +74,10 @@ func HandleFolderList(folder storage.Folder, recursive bool) error {
 	var err error
 
 	if recursive {
-		folderObjects, err = storage.ListFolderRecursively(folder)
+		folderObjects, err = storage.ListFolderRecursively(context.Background(), folder)
 	} else {
 		var subFolders []storage.Folder
-		folderObjects, subFolders, err = folder.ListFolder()
+		folderObjects, subFolders, err = folder.ListFolder(context.Background())
 		for i := range subFolders {
 			list = append(list, NewListDirectory(subFolders[i], folder))
 		}
@@ -121,7 +122,7 @@ func WriteObjectsList(objects []ListElement, output io.Writer) error {
 }
 
 func HandleFolderListWithGlob(folder storage.Folder, pattern string, recursive bool) error {
-	_, folderPaths, err := storage.Glob(folder, pattern)
+	_, folderPaths, err := storage.Glob(context.Background(), folder, pattern)
 	if err != nil {
 		return err
 	}

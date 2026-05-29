@@ -38,7 +38,7 @@ func TestWalPush_HandleWALPush(t *testing.T) {
 	uploader, _, dir, testFileName := generateAndUploadWalFile(t, "1")
 	defer testtools.Cleanup(t, dir)
 	// ".mock" suffix is the MockCompressor file extension
-	_, err := uploader.Folder().ReadObject(testFileName + ".mock")
+	_, err := uploader.Folder().ReadObject(context.Background(), testFileName+".mock")
 	assert.NoError(t, err)
 }
 
@@ -46,7 +46,7 @@ func TestWalPush_IndividualMetadataUploader(t *testing.T) {
 	viper.Set(conf.UploadWalMetadata, postgres.WalIndividualMetadataLevel)
 	uploader, _, dir, testFileName := generateAndUploadWalFile(t, "1")
 	defer testtools.Cleanup(t, dir)
-	_, err := uploader.Folder().ReadObject(testFileName + ".json")
+	_, err := uploader.Folder().ReadObject(context.Background(), testFileName+".json")
 	assert.NoError(t, err)
 }
 
@@ -54,7 +54,7 @@ func TestWalPush_BulkMetadataUploader(t *testing.T) {
 	viper.Set(conf.UploadWalMetadata, postgres.WalBulkMetadataLevel)
 	uploader, _, dir, testFileName := generateAndUploadWalFile(t, "F")
 	defer testtools.Cleanup(t, dir)
-	_, err := uploader.Folder().ReadObject(testFileName[0:len(testFileName)-1] + ".json")
+	_, err := uploader.Folder().ReadObject(context.Background(), testFileName[0:len(testFileName)-1]+".json")
 	assert.NoError(t, err)
 }
 
@@ -62,7 +62,7 @@ func TestWalPush_NoMetataNoUploader(t *testing.T) {
 	viper.Set(conf.UploadWalMetadata, postgres.WalNoMetadataLevel)
 	uploader, _, dir, testFileName := generateAndUploadWalFile(t, "1")
 	defer testtools.Cleanup(t, dir)
-	_, err := uploader.Folder().ReadObject(testFileName + ".json")
+	_, err := uploader.Folder().ReadObject(context.Background(), testFileName+".json")
 	assert.Error(t, err)
 }
 
@@ -71,6 +71,6 @@ func TestWalPush_BulkMetadataUploaderWithUploadConcurrency(t *testing.T) {
 	viper.Set(conf.UploadConcurrencySetting, 4)
 	uploader, _, dir, testFileName := generateAndUploadWalFile(t, "F")
 	defer testtools.Cleanup(t, dir)
-	_, err := uploader.Folder().ReadObject(testFileName[0:len(testFileName)-1] + ".json")
+	_, err := uploader.Folder().ReadObject(context.Background(), testFileName[0:len(testFileName)-1]+".json")
 	assert.NoError(t, err)
 }

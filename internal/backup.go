@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	jsonv2 "encoding/json/v2"
 	"fmt"
@@ -86,7 +87,7 @@ func (backup *Backup) GetTarPartitionFolder() storage.Folder {
 
 // SentinelExists checks that the sentinel file of the specified backup exists.
 func (backup *Backup) SentinelExists() (bool, error) {
-	return backup.Folder.Exists(backup.getStopSentinelPath())
+	return backup.Folder.Exists(context.Background(), backup.getStopSentinelPath())
 }
 
 // TODO : unit tests
@@ -123,7 +124,7 @@ func UploadDto(folder storage.Folder, dto interface{}, path string) error {
 	go func() {
 		_ = w.CloseWithError(jsonv2.MarshalWrite(w, dto, json.DefaultOptionsV1()))
 	}()
-	return folder.PutObject(path, r)
+	return folder.PutObject(context.Background(), path, r)
 }
 
 func (backup *Backup) CheckExistence() (bool, error) {

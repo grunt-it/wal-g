@@ -1,6 +1,7 @@
 package pax
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -65,7 +66,7 @@ func LoadStoragePaxFiles(baseBackupsFolder storage.Folder) (map[string]struct{},
 // has a `pax_files_metadata.json` next to its sentinel. Backups without the metadata
 // (older format, or non-PAX clusters) are silently skipped.
 func iterateStoragePaxFilesWithFunc(baseBackupsFolder storage.Folder, fn func(string, BackupFileDesc)) error {
-	backupObjects, _, err := baseBackupsFolder.ListFolder()
+	backupObjects, _, err := baseBackupsFolder.ListFolder(context.Background())
 	if err != nil {
 		return err
 	}

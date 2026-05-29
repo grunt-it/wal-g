@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -63,7 +64,7 @@ func NewBackupInStorage(baseBackupFolder storage.Folder, name, storage string) (
 
 func (backup *Backup) GetTarNames() ([]string, error) {
 	tarPartitionFolder := backup.GetTarPartitionFolder()
-	objects, _, err := tarPartitionFolder.ListFolder()
+	objects, _, err := tarPartitionFolder.ListFolder(context.Background())
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to list backup '%s' for deletion", backup.Name)
 	}

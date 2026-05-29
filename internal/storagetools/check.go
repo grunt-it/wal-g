@@ -2,6 +2,7 @@ package storagetools
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -12,13 +13,13 @@ import (
 )
 
 func HandleCheckRead(folder storage.Folder, filenames []string) error {
-	_, _, err := folder.ListFolder()
+	_, _, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to list the storage: %v", err)
 	}
 	missing := make([]string, 0)
 	for _, name := range filenames {
-		ok, err := folder.Exists(name)
+		ok, err := folder.Exists(context.Background(), name)
 		if err != nil || !ok {
 			missing = append(missing, name)
 		}
@@ -41,7 +42,7 @@ func HandleCheckWrite(folder storage.Folder) error {
 	var filename string
 	for {
 		filename = randomName(32)
-		ok, err := folder.Exists(filename)
+		ok, err := folder.Exists(context.Background(), filename)
 		if err != nil {
 			return fmt.Errorf("failed to read from the storage: %v", err)
 		}
@@ -49,8 +50,8 @@ func HandleCheckWrite(folder storage.Folder) error {
 			break
 		}
 	}
-	err := folder.PutObject(filename, bytes.NewBufferString("test"))
-	if folder.DeleteObjects([]storage.Object{storage.NewLocalObject(filename, time.Time{}, 0)}) != nil {
+	err := folder.PutObject(context.Background(), filename, bytes.NewBufferString("test"))
+	if folder.DeleteObjects(context.Background(), []storage.Object{storage.NewLocalObject(filename, time.Time{}, 0)}) != nil {
 		tracelog.WarningLogger.Printf("failed to clean temp files, %s left in storage", filename)
 	}
 	if err != nil {

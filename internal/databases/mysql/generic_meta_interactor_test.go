@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"bytes"
+	"context"
 	"testing"
 	"time"
 
@@ -194,7 +195,7 @@ func TestGenericMetaSetter_SetUserData_InvalidSentinel(t *testing.T) {
 	folder := st.RootFolder()
 
 	backupName := "base_000000010000000000000011"
-	require.NoError(t, folder.PutObject(backupName+"_backup_stop_sentinel.json", bytes.NewReader([]byte("invalid json"))))
+	require.NoError(t, folder.PutObject(context.Background(), backupName+"_backup_stop_sentinel.json", bytes.NewReader([]byte("invalid json"))))
 
 	ms := NewGenericMetaSetter()
 	err := ms.SetUserData(backupName, folder, "newdata")

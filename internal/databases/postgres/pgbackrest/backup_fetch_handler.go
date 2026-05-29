@@ -1,6 +1,7 @@
 package pgbackrest
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path"
@@ -73,7 +74,7 @@ func createDirectories(backupDetails *BackupDetails, dbDataDirectory string) err
 }
 
 func getFilesRecursively(folder storage.Folder, backupFilesFolder storage.Folder, fileMode int) (files []internal.ReaderMaker, err error) {
-	objects, subfolders, err := folder.ListFolder()
+	objects, subfolders, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}

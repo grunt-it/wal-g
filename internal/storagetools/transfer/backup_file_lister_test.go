@@ -3,6 +3,7 @@ package transfer
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"fmt"
 	"slices"
 	"sort"
@@ -30,11 +31,11 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 		l, source, target := defaultLister()
 
 		for i := 0; i < 2; i++ {
-			_ = source.PutObject(backupPrefix(i)+"/a", &bytes.Buffer{})
-			_ = source.PutObject(backupPrefix(i)+"/b/c", &bytes.Buffer{})
-			_ = source.PutObject(backupPrefix(i)+"_backup_stop_sentinel.json", &bytes.Buffer{})
+			_ = source.PutObject(context.Background(), backupPrefix(i)+"/a", &bytes.Buffer{})
+			_ = source.PutObject(context.Background(), backupPrefix(i)+"/b/c", &bytes.Buffer{})
+			_ = source.PutObject(context.Background(), backupPrefix(i)+"_backup_stop_sentinel.json", &bytes.Buffer{})
 		}
-		_ = source.PutObject("basebackups_005/non_backup_file", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/non_backup_file", &bytes.Buffer{})
 
 		groups, num, err := l.ListFilesToMove(source, target)
 		assert.NoError(t, err)
@@ -67,11 +68,11 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 	t.Run("exclude already existing files", func(t *testing.T) {
 		l, source, target := defaultLister()
 
-		_ = source.PutObject("basebackups_005/base_001/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001/b", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/b", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
 
-		_ = target.PutObject("basebackups_005/base_001/b", &bytes.Buffer{})
+		_ = target.PutObject(context.Background(), "basebackups_005/base_001/b", &bytes.Buffer{})
 
 		groups, num, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -98,11 +99,11 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 		l, source, target := defaultLister()
 		l.Overwrite = true
 
-		_ = source.PutObject("basebackups_005/base_001/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001/b", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/b", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
 
-		_ = target.PutObject("basebackups_005/base_001/b", &bytes.Buffer{})
+		_ = target.PutObject(context.Background(), "basebackups_005/base_001/b", &bytes.Buffer{})
 
 		groups, _, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -115,14 +116,14 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 		l, source, target := defaultLister()
 		l = NewSingleBackupFileLister("base_002", l.Overwrite, l.MaxFiles)
 
-		_ = source.PutObject("basebackups_005/base_001/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
 
-		_ = source.PutObject("basebackups_005/base_002/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
 
-		_ = source.PutObject("basebackups_005/base_003/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_003_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_003/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_003_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		groups, _, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -137,8 +138,8 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 		l.Name = "base_001"
 		l.MaxBackups = 0
 
-		_ = source.PutObject("basebackups_005/base_001/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		groups, _, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -149,10 +150,10 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 	t.Run("skip incomplete backups", func(t *testing.T) {
 		l, source, target := defaultLister()
 
-		_ = source.PutObject("basebackups_005/base_001/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/a", &bytes.Buffer{})
 
-		_ = source.PutObject("basebackups_005/base_002/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		groups, _, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -165,10 +166,10 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 	t.Run("skip empty backups", func(t *testing.T) {
 		l, source, target := defaultLister()
 
-		_ = source.PutObject("basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
 
-		_ = source.PutObject("basebackups_005/base_002/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		groups, _, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -182,11 +183,11 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 		l, source, target := defaultLister()
 		l.MaxFiles = 3
 
-		_ = source.PutObject("basebackups_005/base_001/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
 
-		_ = source.PutObject("basebackups_005/base_002/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		groups, num, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -200,8 +201,8 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 		l, source, target := defaultLister()
 		l.MaxFiles = 1
 
-		_ = source.PutObject("basebackups_005/base_002/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		groups, num, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)
@@ -214,11 +215,11 @@ func TestBackupFileLister_ListFilesToMove(t *testing.T) {
 		l, source, target := defaultLister()
 		l.MaxBackups = 1
 
-		_ = source.PutObject("basebackups_005/base_001/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_001_backup_stop_sentinel.json", &bytes.Buffer{})
 
-		_ = source.PutObject("basebackups_005/base_002/a", &bytes.Buffer{})
-		_ = source.PutObject("basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002/a", &bytes.Buffer{})
+		_ = source.PutObject(context.Background(), "basebackups_005/base_002_backup_stop_sentinel.json", &bytes.Buffer{})
 
 		groups, num, err := l.ListFilesToMove(source, target)
 		require.NoError(t, err)

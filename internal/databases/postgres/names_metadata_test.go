@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"slices"
 	"testing"
@@ -260,8 +261,8 @@ func TestFetchDtoWithFilesMetadata(t *testing.T) {
 	bytesOld, _ := json.Marshal(oldObjects)
 	bytesNew, _ := json.Marshal(newObjects)
 
-	folder.PutObject("files_metadata_old.json", bytes.NewReader(bytesOld))
-	folder.PutObject("files_metadata_new.json", bytes.NewReader(bytesNew))
+	folder.PutObject(context.Background(), "files_metadata_old.json", bytes.NewReader(bytesOld))
+	folder.PutObject(context.Background(), "files_metadata_new.json", bytes.NewReader(bytesNew))
 	ansV1 := postgres.DatabaseObjectsInfo{}
 	err := internal.FetchDto(folder, &ansV1, "files_metadata_old.json")
 	assert.NoError(t, err)

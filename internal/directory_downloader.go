@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/wal-g/tracelog"
 	"github.com/wal-g/wal-g/pkg/storages/storage"
@@ -52,7 +54,7 @@ func (downloader *CommonDirectoryDownloader) getTarPartitionFolder() storage.Fol
 
 func (downloader *CommonDirectoryDownloader) getTarNames() (names []string, err error) {
 	tarPartitionFolder := downloader.getTarPartitionFolder()
-	objects, _, err := tarPartitionFolder.ListFolder()
+	objects, _, err := tarPartitionFolder.ListFolder(context.Background())
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to list backup '%s' for deletion", downloader.BackupName)
 	}

@@ -59,7 +59,7 @@ func GetSSECustomerKeyMD5(sseCustomerKey string) string {
 	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
-func (folder *Folder) Exists(objectRelativePath string) (bool, error) {
+func (folder *Folder) Exists(ctx context.Context, objectRelativePath string) (bool, error) {
 	objectPath := folder.path + objectRelativePath
 	stopSentinelObjectInput := &s3.HeadObjectInput{
 		Bucket: folder.bucket,
@@ -74,7 +74,7 @@ func (folder *Folder) Exists(objectRelativePath string) (bool, error) {
 		stopSentinelObjectInput.SSECustomerKeyMD5 = aws.String(customerKeyMD5)
 	}
 
-	_, err := folder.s3API.HeadObject(stopSentinelObjectInput)
+	_, err := folder.s3API.HeadObjectWithContext(ctx, stopSentinelObjectInput)
 	if err != nil {
 		if isAwsNotExist(err) {
 			return false, nil
@@ -84,16 +84,12 @@ func (folder *Folder) Exists(objectRelativePath string) (bool, error) {
 	return true, nil
 }
 
-func (folder *Folder) PutObject(name string, content io.Reader) error {
-	return folder.uploader.upload(context.Background(), *folder.bucket, folder.path+name, content) //TODO
+func (folder *Folder) PutObject(ctx context.Context, name string, content io.Reader) error {
+	return folder.uploader.upload(ctx, *folder.bucket, folder.path+name, content)
 }
 
-func (folder *Folder) PutObjectWithContext(ctx context.Context, name string, content io.Reader) error {
-	return folder.uploader.upload(ctx, *folder.bucket, folder.path+name, content) //TODO
-}
-
-func (folder *Folder) CopyObject(srcPath string, dstPath string) error {
-	if exists, err := folder.Exists(srcPath); !exists {
+func (folder *Folder) CopyObject(ctx context.Context, srcPath string, dstPath string) error {
+	if exists, err := folder.Exists(ctx, srcPath); !exists {
 		if err == nil {
 			return storage.NewObjectNotFoundError(srcPath)
 		}
@@ -123,11 +119,11 @@ func (folder *Folder) CopyObject(srcPath string, dstPath string) error {
 		}
 	}
 
-	_, err := folder.s3API.CopyObject(input)
+	_, err := folder.s3API.CopyObjectWithContext(ctx, input)
 	return err
 }
 
-func (folder *Folder) ReadObject(objectRelativePath string) (io.ReadCloser, error) {
+func (folder *Folder) ReadObject(ctx context.Context, objectRelativePath string) (io.ReadCloser, error) {
 	objectPath := folder.path + objectRelativePath
 	input := &s3.GetObjectInput{
 		Bucket: folder.bucket,
@@ -142,7 +138,7 @@ func (folder *Folder) ReadObject(objectRelativePath string) (io.ReadCloser, erro
 		input.SSECustomerKeyMD5 = aws.String(customerKeyMD5)
 	}
 
-	object, err := folder.s3API.GetObject(input)
+	object, err := folder.s3API.GetObjectWithContext(ctx, input)
 	if err != nil {
 		if isAwsNotExist(err) {
 			return nil, storage.NewObjectNotFoundError(objectPath)
@@ -151,7 +147,7 @@ func (folder *Folder) ReadObject(objectRelativePath string) (io.ReadCloser, erro
 	}
 	reader := object.Body
 	if folder.config.RangeBatchEnabled {
-		reader = NewRangeReader(object.Body, objectPath, folder.config.RangeMaxRetries, folder)
+		reader = NewRangeReader(ctx, object.Body, objectPath, folder.config.RangeMaxRetries, folder)
 	}
 	return NewContentLengthValidator(reader, aws.Int64Value(object.ContentLength), objectPath), nil
 }
@@ -177,12 +173,12 @@ func (folder *Folder) SetShowAllVersions(show bool) {
 	folder.config.showAllVersions = show
 }
 
-func (folder *Folder) ListFolder() (objects []storage.Object, subFolders []storage.Folder, err error) {
+func (folder *Folder) ListFolder(ctx context.Context) (objects []storage.Object, subFolders []storage.Folder, err error) {
 	prefix := aws.String(folder.path)
 	delimiter := aws.String("/")
 
 	if folder.isVersioningEnabled() {
-		objects, subFolders, err = folder.listVersions(prefix, delimiter)
+		objects, subFolders, err = folder.listVersions(ctx, prefix, delimiter)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -206,7 +202,7 @@ func (folder *Folder) ListFolder() (objects []storage.Object, subFolders []stora
 			return true
 		}
 
-		err = folder.listObjectsPages(prefix, delimiter, nil, nil, listFunc)
+		err = folder.listObjectsPages(ctx, prefix, delimiter, nil, nil, listFunc)
 
 		// DigitalOcean Spaces compatibility: DO's API complains about NoSuchKey when trying to list folders
 		// which don't yet exist.
@@ -219,6 +215,7 @@ func (folder *Folder) ListFolder() (objects []storage.Object, subFolders []stora
 }
 
 func (folder *Folder) ListFolderSegment(
+	ctx context.Context,
 	startAfterKey *string,
 	endBeforeKey *string,
 ) (objects []storage.Object, subFolders []storage.Folder, err error) {
@@ -254,7 +251,7 @@ func (folder *Folder) ListFolderSegment(
 		return cont
 	}
 
-	err = folder.listObjectsPages(prefix, delimiter, nil, startAfterPrefix, listFunc)
+	err = folder.listObjectsPages(ctx, prefix, delimiter, nil, startAfterPrefix, listFunc)
 
 	// DigitalOcean Spaces compatibility: DO's API complains about NoSuchKey when trying to list folders
 	// which don't yet exist.
@@ -354,7 +351,7 @@ func deleteMarkerAdditionalInfo(marker versionInfo) string {
 	return "DELETE"
 }
 
-func (folder *Folder) listVersions(prefix *string, delimiter *string) ([]storage.Object, []storage.Folder, error) {
+func (folder *Folder) listVersions(ctx context.Context, prefix *string, delimiter *string) ([]storage.Object, []storage.Folder, error) {
 	subFolders := []storage.Folder{}
 
 	// Collect all versions and delete markers across all pages first,
@@ -379,7 +376,7 @@ func (folder *Folder) listVersions(prefix *string, delimiter *string) ([]storage
 		Prefix:    prefix,
 		Delimiter: delimiter,
 	}
-	err := folder.s3API.ListObjectVersionsPages(input, versionsListFunc)
+	err := folder.s3API.ListObjectVersionsPagesWithContext(ctx, input, versionsListFunc)
 
 	// DigitalOcean Spaces compatibility: DO's API complains about NoSuchKey when trying to list folders
 	// which don't yet exist.
@@ -407,17 +404,17 @@ func (folder *Folder) listVersions(prefix *string, delimiter *string) ([]storage
 	return objects, subFolders, nil
 }
 
-func (folder *Folder) listObjectsPages(prefix *string, delimiter *string, maxKeys *int64, startAfter *string,
+func (folder *Folder) listObjectsPages(ctx context.Context, prefix *string, delimiter *string, maxKeys *int64, startAfter *string,
 	listFunc func(commonPrefixes []*s3.CommonPrefix, contents []*s3.Object) bool) (err error) {
 	if folder.config.UseListObjectsV1 {
-		err = folder.listObjectsPagesV1(prefix, delimiter, maxKeys, startAfter, listFunc)
+		err = folder.listObjectsPagesV1(ctx, prefix, delimiter, maxKeys, startAfter, listFunc)
 	} else {
-		err = folder.listObjectsPagesV2(prefix, delimiter, maxKeys, startAfter, listFunc)
+		err = folder.listObjectsPagesV2(ctx, prefix, delimiter, maxKeys, startAfter, listFunc)
 	}
 	return
 }
 
-func (folder *Folder) listObjectsPagesV1(prefix *string, delimiter *string, maxKeys *int64, startAfter *string,
+func (folder *Folder) listObjectsPagesV1(ctx context.Context, prefix *string, delimiter *string, maxKeys *int64, startAfter *string,
 	listFunc func(commonPrefixes []*s3.CommonPrefix, contents []*s3.Object) bool) error {
 	s3Objects := &s3.ListObjectsInput{
 		Bucket:    folder.bucket,
@@ -427,13 +424,13 @@ func (folder *Folder) listObjectsPagesV1(prefix *string, delimiter *string, maxK
 		Marker:    startAfter,
 	}
 
-	err := folder.s3API.ListObjectsPages(s3Objects, func(files *s3.ListObjectsOutput, lastPage bool) bool {
+	err := folder.s3API.ListObjectsPagesWithContext(ctx, s3Objects, func(files *s3.ListObjectsOutput, lastPage bool) bool {
 		return listFunc(files.CommonPrefixes, files.Contents)
 	})
 	return err
 }
 
-func (folder *Folder) listObjectsPagesV2(prefix *string, delimiter *string, maxKeys *int64, startAfter *string,
+func (folder *Folder) listObjectsPagesV2(ctx context.Context, prefix *string, delimiter *string, maxKeys *int64, startAfter *string,
 	listFunc func(commonPrefixes []*s3.CommonPrefix, contents []*s3.Object) bool) error {
 	s3Objects := &s3.ListObjectsV2Input{
 		Bucket:     folder.bucket,
@@ -442,13 +439,13 @@ func (folder *Folder) listObjectsPagesV2(prefix *string, delimiter *string, maxK
 		MaxKeys:    maxKeys,
 		StartAfter: startAfter,
 	}
-	err := folder.s3API.ListObjectsV2Pages(s3Objects, func(files *s3.ListObjectsV2Output, lastPage bool) bool {
+	err := folder.s3API.ListObjectsV2PagesWithContext(ctx, s3Objects, func(files *s3.ListObjectsV2Output, lastPage bool) bool {
 		return listFunc(files.CommonPrefixes, files.Contents)
 	})
 	return err
 }
 
-func (folder *Folder) DeleteObjects(objects []storage.Object) error {
+func (folder *Folder) DeleteObjects(ctx context.Context, objects []storage.Object) error {
 	parts := partitionObjects(objects, folder.config.DeleteBatchSize)
 
 	for _, part := range parts {
@@ -461,7 +458,7 @@ func (folder *Folder) DeleteObjects(objects []storage.Object) error {
 				VersionId: aws.String(obj.GetVersionID()),
 			})
 		}
-		_, err := folder.s3API.DeleteObjects(input)
+		_, err := folder.s3API.DeleteObjectsWithContext(ctx, input)
 		if err != nil {
 			for _, obj := range part {
 				tracelog.DebugLogger.Printf("object %s version %s", obj.GetName(), obj.GetVersionID())

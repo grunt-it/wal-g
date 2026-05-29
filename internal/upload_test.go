@@ -89,7 +89,7 @@ func TestUpload(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	_, objErr := uploader.UploadingFolder.ReadObject("")
+	_, objErr := uploader.UploadingFolder.ReadObject(context.Background(), "")
 
 	assert.NoError(t, objErr)
 }
@@ -105,8 +105,8 @@ func TestUploadMock(t *testing.T) {
 
 	reader := bytes.NewReader([]byte("some text"))
 
-	folder.EXPECT().PutObjectWithContext(gomock.Any(), "some/path", gomock.Any()).Return(nil)
-	folder.EXPECT().PutObjectWithContext(gomock.Any(), "path/to/incorrect/file", gomock.Any()).Return(errors.New("some error"))
+	folder.EXPECT().PutObject(gomock.Any(), "some/path", gomock.Any()).Return(nil)
+	folder.EXPECT().PutObject(gomock.Any(), "path/to/incorrect/file", gomock.Any()).Return(errors.New("some error"))
 
 	uploadWithoutErr := uploader.Upload(context.Background(), "some/path", reader)
 

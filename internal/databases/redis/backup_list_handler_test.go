@@ -2,6 +2,7 @@ package redis_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -72,7 +73,7 @@ func TestHandleDetailedBackupList(t *testing.T) {
 
 			assert.NoError(
 				t,
-				folder.PutObject(b.BackupName+utility.SentinelSuffix, bytes.NewReader(serialized)),
+				folder.PutObject(context.Background(), b.BackupName+utility.SentinelSuffix, bytes.NewReader(serialized)),
 				"couldn't put sentinel in the folder",
 			)
 		}

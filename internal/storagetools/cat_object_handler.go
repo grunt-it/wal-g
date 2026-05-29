@@ -1,6 +1,7 @@
 package storagetools
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -17,7 +18,7 @@ func HandleCatObject(objectPath string, folder storage.Folder, decrypt, decompre
 }
 
 func HandleCatObjectWithGlob(pattern string, folder storage.Folder, decrypt, decompress bool) error {
-	objectPaths, _, err := storage.Glob(folder, pattern)
+	objectPaths, _, err := storage.Glob(context.Background(), folder, pattern)
 	if err != nil {
 		return err
 	}

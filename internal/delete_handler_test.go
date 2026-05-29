@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -14,16 +15,16 @@ import (
 func CreateMockStorageFolder() storage.Folder {
 	var folder = memory.NewFolder("in_memory/", memory.NewKVS())
 	subFolder := folder.GetSubFolder("basebackups_005/")
-	subFolder.PutObject("base_123_backup_stop_sentinel.json", &bytes.Buffer{})
-	subFolder.PutObject("base_456_backup_stop_sentinel.json", strings.NewReader("{}"))
-	subFolder.PutObject("base_000_backup_stop_sentinel.json", &bytes.Buffer{}) // last put
-	subFolder.PutObject("base_123312", &bytes.Buffer{})                        // not a sentinel
-	subFolder.PutObject("base_321/nop", &bytes.Buffer{})
-	subFolder.PutObject("folder123/nop", &bytes.Buffer{})
-	subFolder.PutObject("base_456/tar_partitions/1", &bytes.Buffer{})
-	subFolder.PutObject("base_456/tar_partitions/2", &bytes.Buffer{})
-	subFolder.PutObject("base_456/tar_partitions/3", &bytes.Buffer{})
-	subFolder.PutObject("base_456/some_folder/3", &bytes.Buffer{})
+	subFolder.PutObject(context.Background(), "base_123_backup_stop_sentinel.json", &bytes.Buffer{})
+	subFolder.PutObject(context.Background(), "base_456_backup_stop_sentinel.json", strings.NewReader("{}"))
+	subFolder.PutObject(context.Background(), "base_000_backup_stop_sentinel.json", &bytes.Buffer{}) // last put
+	subFolder.PutObject(context.Background(), "base_123312", &bytes.Buffer{})                        // not a sentinel
+	subFolder.PutObject(context.Background(), "base_321/nop", &bytes.Buffer{})
+	subFolder.PutObject(context.Background(), "folder123/nop", &bytes.Buffer{})
+	subFolder.PutObject(context.Background(), "base_456/tar_partitions/1", &bytes.Buffer{})
+	subFolder.PutObject(context.Background(), "base_456/tar_partitions/2", &bytes.Buffer{})
+	subFolder.PutObject(context.Background(), "base_456/tar_partitions/3", &bytes.Buffer{})
+	subFolder.PutObject(context.Background(), "base_456/some_folder/3", &bytes.Buffer{})
 	return folder
 }
 
@@ -43,7 +44,7 @@ func TestDeleteOldObjects(t *testing.T) {
 	folderFilter := func(path string) bool { return true }
 	err := DeleteObjectsWhere(folder, true, filter, folderFilter)
 	assert.NoError(t, err)
-	savedObjects, err := storage.ListFolderRecursively(folder)
+	savedObjects, err := storage.ListFolderRecursively(context.Background(), folder)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(savedObjects))
 	assert.Equal(t, expectedOnlyOneSavedObjectName, savedObjects[0].GetName())
@@ -62,7 +63,7 @@ func TestDeleteOldObjectsWithFilter(t *testing.T) {
 
 	err := DeleteObjectsWhere(folder, true, filter, folderFilter)
 	assert.NoError(t, err)
-	savedObjects, err := storage.ListFolderRecursively(folder)
+	savedObjects, err := storage.ListFolderRecursively(context.Background(), folder)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(savedObjects))
 	assert.Equal(t, expectedOnlyOneSavedObjectName, savedObjects[0].GetName())
@@ -70,7 +71,7 @@ func TestDeleteOldObjectsWithFilter(t *testing.T) {
 
 func TestFindTargetByName(t *testing.T) {
 	mockFolder := CreateMockStorageFolder()
-	objects, _, _ := mockFolder.GetSubFolder("basebackups_005/").ListFolder()
+	objects, _, _ := mockFolder.GetSubFolder("basebackups_005/").ListFolder(context.Background())
 	backupObjects := []BackupObject{NewDefaultBackupObject(objects[0])}
 	deleteHandler := CreateMockDeleteHandler(backupObjects, mockFolder)
 
@@ -99,7 +100,7 @@ func TestFindTargetByName(t *testing.T) {
 
 func TestFindTargetByNameNotContains(t *testing.T) {
 	mockFolder := CreateMockStorageFolder()
-	objects, _, _ := mockFolder.GetSubFolder("basebackups_005/").ListFolder()
+	objects, _, _ := mockFolder.GetSubFolder("basebackups_005/").ListFolder(context.Background())
 	backupObjects := []BackupObject{NewDefaultBackupObject(objects[0])}
 	deleteHandler := CreateMockDeleteHandler(backupObjects, mockFolder)
 

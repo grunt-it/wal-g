@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -79,7 +80,7 @@ func NewJournalInfo(
 // Read syncs JournalInfo by reading the file on S3
 func (ji *JournalInfo) Read(folder storage.Folder) error {
 	folder = folder.GetSubFolder(utility.BaseBackupPath)
-	journalInfoReader, err := folder.ReadObject(ji.JournalName)
+	journalInfoReader, err := folder.ReadObject(context.Background(), ji.JournalName)
 	if err != nil {
 		return err
 	}
@@ -100,12 +101,12 @@ func (ji *JournalInfo) Upload(folder storage.Folder) error {
 		return err
 	}
 
-	return folder.PutObject(ji.JournalName, bytes.NewBuffer(rawJournalInfo))
+	return folder.PutObject(context.Background(), ji.JournalName, bytes.NewBuffer(rawJournalInfo))
 }
 
 // GetNext retrieves the JournalInfo that is immediately older/newer than the current one from S3
 func (ji *JournalInfo) GetNext(folder storage.Folder, direction direction) (JournalInfo, error) {
-	objs, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder()
+	objs, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder(context.Background())
 	if err != nil {
 		return JournalInfo{}, err
 	}
@@ -153,7 +154,7 @@ func (ji *JournalInfo) GetNext(folder storage.Folder, direction direction) (Jour
 func (ji *JournalInfo) Delete(folder storage.Folder) error {
 	err := folder.
 		GetSubFolder(utility.BaseBackupPath).
-		DeleteObjects([]storage.Object{storage.NewLocalObject(ji.JournalName, time.Time{}, 0)})
+		DeleteObjects(context.Background(), []storage.Object{storage.NewLocalObject(ji.JournalName, time.Time{}, 0)})
 	if err != nil {
 		return err
 	}
@@ -198,7 +199,7 @@ func GetMostRecentJournalInfo(
 	folder storage.Folder,
 	journalDir string,
 ) (JournalInfo, error) {
-	objs, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder()
+	objs, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder(context.Background())
 	if err != nil {
 		return JournalInfo{}, err
 	}
@@ -237,7 +238,7 @@ func (ji *JournalInfo) UpdateIntervalSize(folder storage.Folder, journalFilesObj
 	var err error
 	if !journalFilesObj.initialized {
 		// doing this 1 time for reusing it in next runs during single calculation
-		journalFiles, _, err := folder.GetSubFolder(ji.JournalDirectoryName).ListFolder()
+		journalFiles, _, err := folder.GetSubFolder(ji.JournalDirectoryName).ListFolder(context.Background())
 		if err != nil {
 			return err
 		}

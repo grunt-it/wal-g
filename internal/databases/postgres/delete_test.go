@@ -1,6 +1,7 @@
 package postgres_test
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"testing"
@@ -232,12 +233,12 @@ func verifyThatExistBackupsAndWals(t *testing.T, expectBackupExistAfterDelete, e
 	baseBackupFolder := folder.GetSubFolder(utility.BaseBackupPath)
 	walBackupFolder := folder.GetSubFolder(utility.WalPath)
 	for backupName, expect := range expectBackupExistAfterDelete {
-		exists, err := baseBackupFolder.Exists(backupName + "/" + utility.MetadataFileName)
+		exists, err := baseBackupFolder.Exists(context.Background(), backupName+"/"+utility.MetadataFileName)
 		assert.NoError(t, err)
 		assert.Equal(t, expect, exists, "errored on "+backupName+"/"+utility.MetadataFileName)
 	}
 	for walName, expect := range expectWalExistAfterDelete {
-		exists, err := walBackupFolder.Exists(walName + ".lz4")
+		exists, err := walBackupFolder.Exists(context.Background(), walName+".lz4")
 		assert.NoError(t, err)
 		assert.Equal(t, expect, exists, "errored on "+walName+".lz4")
 	}
@@ -309,7 +310,7 @@ func createMockFolderWithTime(t *testing.T, baseTime time.Time) *mocks.MockFolde
 
 	mockBaseBackupFolder.
 		EXPECT().
-		ListFolder().
+		ListFolder(gomock.Any()).
 		Return(objects, nil, nil).
 		AnyTimes()
 
@@ -332,7 +333,7 @@ func createSimpleMockFolderWithoutBackups(t *testing.T) *mocks.MockFolder {
 
 	mockBaseBackupFolder.
 		EXPECT().
-		ListFolder().
+		ListFolder(gomock.Any()).
 		Return(objects, nil, nil).
 		AnyTimes()
 
@@ -372,7 +373,7 @@ func newTestDeleteHandler(
 // this function is the analog for internal.GetBackupSentinelObjects
 // but we don't use sentinel suffixes in the above tests so there is no sentinel suffix check
 func getBackupObjects(folder storage.Folder) ([]storage.Object, error) {
-	objects, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder()
+	objects, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}

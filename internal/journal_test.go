@@ -61,7 +61,7 @@ func generateAndUploadData(t *testing.T, mockUploader internal.Uploader) {
 		time.Sleep(time.Millisecond)
 	}
 
-	objs, _, err := mockUploader.Folder().GetSubFolder(DefaultJournalDirectory).ListFolder()
+	objs, _, err := mockUploader.Folder().GetSubFolder(DefaultJournalDirectory).ListFolder(context.Background())
 	assert.NoError(t, err)
 	for _, obj := range objs {
 		value, err := strconv.Atoi(obj.GetName())

@@ -38,7 +38,7 @@ func prepareBackupImportSpec(externalStorage storage.Folder, d map[string]string
 }
 
 func resolveExternalStorageFiles(externalFolder storage.Folder, fileNames []string) (map[string]storage.Object, error) {
-	objs, _, err := externalFolder.ListFolder()
+	objs, _, err := externalFolder.ListFolder(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to access external storage: %w", err)
 	}
@@ -175,7 +175,7 @@ func releaseLeasePrintError(ctx context.Context, client *http.Client, blobURL st
 }
 
 func importSingleDatabaseBlob(ctx context.Context, externalFolder storage.Folder, backupFile storage.Object, blobURL string) error {
-	rc, err := externalFolder.ReadObject(backupFile.GetName())
+	rc, err := externalFolder.ReadObject(ctx, backupFile.GetName())
 	if err != nil {
 		return err
 	}

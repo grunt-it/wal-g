@@ -2,6 +2,7 @@ package internal_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"path"
 	"strings"
@@ -51,7 +52,7 @@ func convertMetadata(input internal.GenericMetadata) map[string]interface{} {
 
 func checkEmptyFolderBehaviour(t *testing.T, backupSelector internal.BackupSelector) {
 	folder := testtools.MakeDefaultInMemoryStorageFolder()
-	_ = folder.PutObject("not_backup_path", &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), "not_backup_path", &bytes.Buffer{})
 
 	latestBackup, err := backupSelector.Select(folder)
 
@@ -68,8 +69,8 @@ func TestLatestBackupSelector(t *testing.T) {
 	folder := testtools.MakeDefaultInMemoryStorageFolder()
 	b1 := path.Join(utility.BaseBackupPath, testLatestBackup.BackupName+".1"+utility.SentinelSuffix)
 	b2 := path.Join(utility.BaseBackupPath, testLatestBackup.BackupName+".2"+utility.SentinelSuffix)
-	_ = folder.PutObject(b1, &bytes.Buffer{})
-	_ = folder.PutObject(b2, &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), b1, &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), b2, &bytes.Buffer{})
 
 	backupSelector := internal.NewLatestBackupSelector()
 	latestBackup, err := backupSelector.Select(folder)
@@ -83,9 +84,9 @@ func TestLatestBackupSelector_ignoreSubFolders(t *testing.T) {
 	b1 := path.Join(utility.BaseBackupPath, testLatestBackup.BackupName+".1"+utility.SentinelSuffix)
 	b2 := path.Join(utility.BaseBackupPath, testLatestBackup.BackupName+".2"+utility.SentinelSuffix)
 	b3 := path.Join(utility.BaseBackupPath, "subFolder", testLatestBackup.BackupName+".3"+utility.SentinelSuffix)
-	_ = folder.PutObject(b1, &bytes.Buffer{})
-	_ = folder.PutObject(b2, &bytes.Buffer{})
-	_ = folder.PutObject(b3, &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), b1, &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), b2, &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), b3, &bytes.Buffer{})
 
 	backupSelector := internal.NewLatestBackupSelector()
 	latestBackup, err := backupSelector.Select(folder)
@@ -105,8 +106,8 @@ func TestOldestNonPermanentSelector(t *testing.T) {
 	meta2 := convertMetadata(testOldestBackup)
 	bytesMeta2, _ := json.Marshal(&meta2)
 
-	_ = folder.PutObject(b1, strings.NewReader(string(bytesMeta1)))
-	_ = folder.PutObject(b2, strings.NewReader(string(bytesMeta2)))
+	_ = folder.PutObject(context.Background(), b1, strings.NewReader(string(bytesMeta1)))
+	_ = folder.PutObject(context.Background(), b2, strings.NewReader(string(bytesMeta2)))
 
 	backupSelector := internal.NewOldestNonPermanentSelector(greenplum.NewGenericMetaFetcher())
 	latestBackup, err := backupSelector.Select(folder)
@@ -126,8 +127,8 @@ func TestOldestNonPermanentSelector_ignorePermanentBackups(t *testing.T) {
 	meta2 := convertMetadata(testOldestPermanentBackup)
 	bytesMeta2, _ := json.Marshal(&meta2)
 
-	_ = folder.PutObject(b1, strings.NewReader(string(bytesMeta1)))
-	_ = folder.PutObject(b2, strings.NewReader(string(bytesMeta2)))
+	_ = folder.PutObject(context.Background(), b1, strings.NewReader(string(bytesMeta1)))
+	_ = folder.PutObject(context.Background(), b2, strings.NewReader(string(bytesMeta2)))
 
 	backupSelector := internal.NewOldestNonPermanentSelector(greenplum.NewGenericMetaFetcher())
 	latestBackup, err := backupSelector.Select(folder)
@@ -148,7 +149,7 @@ func TestUserDataBackupSelector(t *testing.T) {
 	meta1 := convertMetadata(testOldestBackup)
 	bytesMeta1, _ := json.Marshal(&meta1)
 
-	_ = folder.PutObject(b1, strings.NewReader(string(bytesMeta1)))
+	_ = folder.PutObject(context.Background(), b1, strings.NewReader(string(bytesMeta1)))
 
 	byteUserData, err := json.Marshal(testOldestBackup.UserData)
 	assert.NoError(t, err)
@@ -171,8 +172,8 @@ func TestUserDataBackupSelector_tooManyBackupsFound(t *testing.T) {
 	meta2 := convertMetadata(testRepeatedUserDataBackup)
 	bytesMeta2, _ := json.Marshal(&meta2)
 
-	_ = folder.PutObject(b1, strings.NewReader(string(bytesMeta1)))
-	_ = folder.PutObject(b2, strings.NewReader(string(bytesMeta2)))
+	_ = folder.PutObject(context.Background(), b1, strings.NewReader(string(bytesMeta1)))
+	_ = folder.PutObject(context.Background(), b2, strings.NewReader(string(bytesMeta2)))
 
 	byteUserData, err := json.Marshal(testOldestBackup.UserData)
 	assert.NoError(t, err)
@@ -197,7 +198,7 @@ func TestBackupNameSelector(t *testing.T) {
 	folder := testtools.MakeDefaultInMemoryStorageFolder()
 
 	b1 := path.Join(utility.BaseBackupPath, testOldestBackup.BackupName+utility.SentinelSuffix)
-	_ = folder.PutObject(b1, &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), b1, &bytes.Buffer{})
 
 	backupSelector, err := internal.NewBackupNameSelector(testOldestBackup.BackupName, true)
 	assert.NoError(t, err)
@@ -211,7 +212,7 @@ func TestBackupNameSelector_backupNotFound(t *testing.T) {
 	folder := testtools.MakeDefaultInMemoryStorageFolder()
 
 	b1 := path.Join(utility.BaseBackupPath, testLatestBackup.BackupName+utility.SentinelSuffix)
-	_ = folder.PutObject(b1, &bytes.Buffer{})
+	_ = folder.PutObject(context.Background(), b1, &bytes.Buffer{})
 
 	backupSelector, err := internal.NewBackupNameSelector(testOldestBackup.BackupName, true)
 	assert.NoError(t, err)

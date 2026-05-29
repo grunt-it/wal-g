@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -116,7 +117,7 @@ func TestFetchSentinel(t *testing.T) {
 	folder := testtools.CreateMockStorageFolder()
 	expectedSentinel := postgres.BackupSentinelDto{}
 	expectedSentinelJson, _ := json.Marshal(expectedSentinel)
-	_ = folder.PutObject("base_789454598_backup_stop_sentinel.json", bytes.NewReader(expectedSentinelJson))
+	_ = folder.PutObject(context.Background(), "base_789454598_backup_stop_sentinel.json", bytes.NewReader(expectedSentinelJson))
 	backup, err := postgres.NewBackup(folder, "base_789454598")
 	require.NoError(t, err)
 
@@ -153,7 +154,7 @@ func TestGetLatestBackupName(t *testing.T) {
 	backupNames := []string{"base_123", "base_456", "base000"}
 	for _, nameBackupPrefix := range backupNames {
 		nameBackup := nameBackupPrefix + utility.SentinelSuffix
-		_ = folder.PutObject(nameBackup, &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), nameBackup, &bytes.Buffer{})
 
 		latestBackup, err := internal.GetLatestBackup(folder)
 		assert.NoError(t, err)

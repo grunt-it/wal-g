@@ -1,6 +1,7 @@
 package greenplum
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -196,7 +197,7 @@ func createRestorePoint(conn *pgx.Conn, restorePointName string) (restoreLSNs ma
 }
 
 func (rpc *RestorePointCreator) checkExists() error {
-	exists, err := rpc.Uploader.Folder().Exists(RestorePointMetadataFileName(rpc.pointName))
+	exists, err := rpc.Uploader.Folder().Exists(context.Background(), RestorePointMetadataFileName(rpc.pointName))
 	if err != nil {
 		return fmt.Errorf("failed to check restore point existence: %v", err)
 	}
@@ -330,7 +331,7 @@ func FindRestorePointWithTS(timestampStr string, restorePointMetas []RestorePoin
 
 // GetRestorePoints receives restore points descriptions and sorts them by time
 func GetRestorePoints(folder storage.Folder) (restorePoints []RestorePointTime, err error) {
-	restorePointsObjects, _, err := folder.ListFolder()
+	restorePointsObjects, _, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}

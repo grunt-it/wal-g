@@ -435,7 +435,7 @@ func (bs *Server) HandleBlockPut(w http.ResponseWriter, req *http.Request) {
 	}
 	filename := idx.PutBlock(blockID, blockSize)
 	bs.uploadSem <- struct{}{}
-	err = folder.PutObject(filename, internal.CompressAndEncrypt(req.Body, bs.compressor, bs.crypter))
+	err = folder.PutObject(context.Background(), filename, internal.CompressAndEncrypt(req.Body, bs.compressor, bs.crypter))
 	<-bs.uploadSem
 	req.Body.Close()
 	if err != nil {
@@ -626,7 +626,7 @@ func (bs *Server) blobPut(r io.Reader, idx *Index) ([]string, error) {
 		id := fmt.Sprintf("data_%05d", i)
 		name := idx.PutBlock(id, uint64(n))
 		encryptedReader := internal.CompressAndEncrypt(bytes.NewReader(buf[:n]), bs.compressor, bs.crypter)
-		err = idx.folder.PutObject(name, encryptedReader)
+		err = idx.folder.PutObject(context.Background(), name, encryptedReader)
 		if err != nil {
 			return nil, err
 		}
@@ -697,7 +697,7 @@ func (bs *Server) HandleBlobDelete(w http.ResponseWriter, req *http.Request) {
 	}
 	bs.indexesMutex.Lock()
 	defer bs.indexesMutex.Unlock()
-	err := upperFolder.DeleteObjects([]storage.Object{storage.NewLocalObject(blob, time.Time{}, 0)})
+	err := upperFolder.DeleteObjects(context.Background(), []storage.Object{storage.NewLocalObject(blob, time.Time{}, 0)})
 	if err != nil {
 		bs.returnError(w, req, err)
 		return
@@ -754,7 +754,7 @@ func (bs *Server) deleteGarbage(folder storage.Folder, garbage []string) {
 	for _, item := range garbage {
 		objects = append(objects, storage.NewLocalObject(item, time.Time{}, 0))
 	}
-	err := folder.DeleteObjects(objects)
+	err := folder.DeleteObjects(context.Background(), objects)
 	if err != nil {
 		tracelog.WarningLogger.Printf("proxy: failed to delete garbage objects: %v", err)
 	}
@@ -812,7 +812,7 @@ func (bs *Server) getCachedReader(idx *Index, s Section) (io.ReadCloser, error) 
 	key := folder.GetPath() + s.Path
 	if s.BlockSize > MaxCacheBlockSize {
 		tracelog.DebugLogger.Printf("READ_OBJ: %s %d", key, s.BlockSize)
-		r, err := folder.ReadObject(s.Path)
+		r, err := folder.ReadObject(context.Background(), s.Path)
 		if err != nil {
 			return nil, err
 		}
@@ -824,7 +824,7 @@ func (bs *Server) getCachedReader(idx *Index, s Section) (io.ReadCloser, error) 
 		buf = b
 	} else {
 		tracelog.DebugLogger.Printf("READ_OBJ: %s %d", key, s.BlockSize)
-		r, err := folder.ReadObject(s.Path)
+		r, err := folder.ReadObject(context.Background(), s.Path)
 		if err != nil {
 			return nil, err
 		}

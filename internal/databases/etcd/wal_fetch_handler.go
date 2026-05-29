@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -28,7 +29,7 @@ func HandleWalFetch(folder storage.Folder, backupName string, dstDir string, bas
 	err = backup.FetchSentinel(&lastBackupSentinel)
 	tracelog.ErrorLogger.FatalfOnError("Failed to unmarshall backup sentinel: %v", err)
 
-	walFiles, _, err := folder.GetSubFolder(utility.WalPath).ListFolder()
+	walFiles, _, err := folder.GetSubFolder(utility.WalPath).ListFolder(context.Background())
 	tracelog.ErrorLogger.FatalfOnError("Failed to list wal folder from storage: %v", err)
 	fmt.Println(walFiles)
 

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"io"
 
 	"github.com/wal-g/tracelog"
@@ -10,7 +11,7 @@ import (
 )
 
 type StorageFolderReader interface {
-	ReadObject(objectRelativePath string) (io.ReadCloser, error)
+	ReadObject(ctx context.Context, objectRelativePath string) (io.ReadCloser, error)
 	SubFolder(subFolderRelativePath string) StorageFolderReader
 }
 

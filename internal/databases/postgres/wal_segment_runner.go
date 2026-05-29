@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -118,7 +119,7 @@ func (r *WalSegmentRunner) getNextSegment() WalSegmentDescription {
 
 // getFolderFilenames returns a set of filenames in provided storage folder
 func getFolderFilenames(folder storage.Folder) ([]string, error) {
-	objects, _, err := folder.ListFolder()
+	objects, _, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}

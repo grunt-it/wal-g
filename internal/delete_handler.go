@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"slices"
@@ -474,7 +475,7 @@ func DeleteObjectsWhere(
 ) error {
 	// if folder has uncurrent versions we need to clean them as well
 	storage.SetShowAllVersions(folder, true)
-	relativePathObjects, err := multistorage.ListFolderRecursivelyWithFilter(folder, folderFilter)
+	relativePathObjects, err := multistorage.ListFolderRecursivelyWithFilter(context.Background(), folder, folderFilter)
 	if err != nil {
 		return err
 	}
@@ -494,7 +495,7 @@ func DeleteObjectsWhere(
 		return nil
 	}
 	if confirm {
-		err := folder.DeleteObjects(markedForDeletion)
+		err := folder.DeleteObjects(context.Background(), markedForDeletion)
 		if err == nil {
 			tracelog.InfoLogger.Printf("Objects deleted successfully: count=%d\n", deletionCount)
 		}

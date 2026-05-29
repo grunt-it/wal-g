@@ -1,6 +1,7 @@
 package transfer
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/wal-g/tracelog"
@@ -45,11 +46,11 @@ func (l *RegularFileLister) ListFilesToMove(source, target storage.Folder) (file
 }
 
 func listMissingFiles(source, target storage.Folder, prefix string, overwrite bool) (map[string]storage.Object, error) {
-	targetFiles, err := storage.ListFolderRecursivelyWithPrefix(target, prefix)
+	targetFiles, err := storage.ListFolderRecursivelyWithPrefix(context.Background(), target, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("list files in the target storage: %w", err)
 	}
-	sourceFiles, err := storage.ListFolderRecursivelyWithPrefix(source, prefix)
+	sourceFiles, err := storage.ListFolderRecursivelyWithPrefix(context.Background(), source, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("list files in the source storage: %w", err)
 	}

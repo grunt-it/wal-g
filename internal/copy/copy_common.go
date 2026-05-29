@@ -68,7 +68,7 @@ func Infos(chs []InfoProvider) error {
 }
 
 func (ch *InfoProvider) copyObject() error {
-	objReadCloser, err := ch.From.ReadObject(ch.SrcObj.GetName())
+	objReadCloser, err := ch.From.ReadObject(context.Background(), ch.SrcObj.GetName())
 	if err != nil {
 		return err
 	}

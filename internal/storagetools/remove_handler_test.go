@@ -2,6 +2,7 @@ package storagetools
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,19 +28,19 @@ func TestHandleRemove(t *testing.T) {
 			"a/b/c/target/1/2/3",
 		}
 		for _, f := range append(targetFolder, targetFile) {
-			err := folder.PutObject(f, bytes.NewBufferString("123"))
+			err := folder.PutObject(context.Background(), f, bytes.NewBufferString("123"))
 			require.NoError(t, err)
 		}
 
 		err := HandleRemove("a/b/c/target", folder)
 		require.NoError(t, err)
 
-		exists, err := folder.Exists(targetFile)
+		exists, err := folder.Exists(context.Background(), targetFile)
 		require.NoError(t, err)
 		assert.False(t, exists)
 
 		for _, f := range targetFolder {
-			exists, err = folder.Exists(f)
+			exists, err = folder.Exists(context.Background(), f)
 			require.NoError(t, err)
 			assert.True(t, exists)
 		}
@@ -55,19 +56,19 @@ func TestHandleRemove(t *testing.T) {
 			"a/b/c/target/1/2/3",
 		}
 		for _, f := range append(targetFolder, targetFile) {
-			err := folder.PutObject(f, bytes.NewBufferString("123"))
+			err := folder.PutObject(context.Background(), f, bytes.NewBufferString("123"))
 			require.NoError(t, err)
 		}
 
 		err := HandleRemove("a/b/c/target/", folder)
 		require.NoError(t, err)
 
-		exists, err := folder.Exists(targetFile)
+		exists, err := folder.Exists(context.Background(), targetFile)
 		require.NoError(t, err)
 		assert.True(t, exists)
 
 		for _, f := range targetFolder {
-			exists, err = folder.Exists(f)
+			exists, err = folder.Exists(context.Background(), f)
 			require.NoError(t, err)
 			assert.False(t, exists)
 		}
@@ -87,7 +88,7 @@ func TestHandleRemove(t *testing.T) {
 			"a/b/c/target/3b/5/6",
 		}
 		for _, f := range append(targetFolder, targetFiles...) {
-			err := folder.PutObject(f, bytes.NewBufferString("123"))
+			err := folder.PutObject(context.Background(), f, bytes.NewBufferString("123"))
 			require.NoError(t, err)
 		}
 
@@ -95,13 +96,13 @@ func TestHandleRemove(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, f := range targetFiles {
-			exists, err := folder.Exists(f)
+			exists, err := folder.Exists(context.Background(), f)
 			require.NoError(t, err)
 			assert.True(t, exists)
 		}
 
 		for _, f := range targetFolder {
-			exists, err := folder.Exists(f)
+			exists, err := folder.Exists(context.Background(), f)
 			require.NoError(t, err)
 			assert.False(t, exists)
 		}

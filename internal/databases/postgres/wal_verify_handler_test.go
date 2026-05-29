@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -777,7 +778,7 @@ func executeWalVerify(
 	rootFolder := setupTestStorageFolder()
 	walFolder := rootFolder.GetSubFolder(utility.WalPath)
 	for name, content := range storageFiles {
-		_ = rootFolder.PutObject(name, content)
+		_ = rootFolder.PutObject(context.Background(), name, content)
 	}
 	putWalSegments(walFilenames, walFolder)
 

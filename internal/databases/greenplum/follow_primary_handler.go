@@ -1,6 +1,7 @@
 package greenplum
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"slices"
@@ -82,7 +83,7 @@ outer:
 		walSegmentNo := postgres.NewWalSegmentNo(LSN)
 
 		subfolder := folder.GetSubFolder(fmt.Sprintf(WalFolder, seg))
-		folderObjects, _, err := subfolder.ListFolder()
+		folderObjects, _, err := subfolder.ListFolder(context.Background())
 		if err != nil {
 			tracelog.ErrorLogger.FatalOnError(err)
 		}

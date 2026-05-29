@@ -1,6 +1,7 @@
 package pgbackrest
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
 	"strings"
@@ -25,7 +26,7 @@ func HandleWalFetch(folder storage.Folder, stanza string, walFileName string, lo
 	if strings.HasSuffix(walFileName, ".backup") {
 		return internal.DownloadFileTo(internal.NewFolderReader(walFolder), walFileName, location)
 	}
-	fileList, _, err := walFolder.ListFolder()
+	fileList, _, err := walFolder.ListFolder(context.Background())
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package greenplum_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -330,7 +331,7 @@ func CreateMockStorageFolder(t *testing.T) storage.Folder {
 		bytesMetadata, err := json.Marshal(backupNames[backupName])
 		assert.NoError(t, err)
 		metadataString := string(bytesMetadata)
-		err = baseBackupFolder.PutObject(backupName+utility.SentinelSuffix, strings.NewReader(metadataString))
+		err = baseBackupFolder.PutObject(context.Background(), backupName+utility.SentinelSuffix, strings.NewReader(metadataString))
 		assert.NoError(t, err)
 	}
 
@@ -338,7 +339,7 @@ func CreateMockStorageFolder(t *testing.T) storage.Folder {
 		bytesMetadata, err := json.Marshal(restorePoints[pointName])
 		assert.NoError(t, err)
 		metadataString := string(bytesMetadata)
-		err = baseBackupFolder.PutObject(pointName+greenplum.RestorePointSuffix, strings.NewReader(metadataString))
+		err = baseBackupFolder.PutObject(context.Background(), pointName+greenplum.RestorePointSuffix, strings.NewReader(metadataString))
 		assert.NoError(t, err)
 	}
 	return folder

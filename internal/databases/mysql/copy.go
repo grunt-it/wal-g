@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"path"
 	"strings"
 
@@ -58,7 +59,7 @@ func backupCopyingInfo(backupName, prefix string, from storage.Folder, to storag
 	tracelog.InfoLogger.Print("Collecting backup files...")
 	var backupPrefix = path.Join(utility.BaseBackupPath, backup.Name)
 
-	objects, err := storage.ListFolderRecursively(from)
+	objects, err := storage.ListFolderRecursively(context.Background(), from)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func backupCopyingInfo(backupName, prefix string, from storage.Folder, to storag
 }
 
 func WildcardInfo(from storage.Folder, to storage.Folder) ([]copy.InfoProvider, error) {
-	objects, err := storage.ListFolderRecursively(from)
+	objects, err := storage.ListFolderRecursively(context.Background(), from)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package storagetools
 
 import (
+	"context"
 	"io"
 	"strings"
 
@@ -63,7 +64,7 @@ func collectCopyingInfo(
 		return nil, err
 	}
 
-	objects, err := storage.ListFolderRecursively(from.RootFolder())
+	objects, err := storage.ListFolderRecursively(context.Background(), from.RootFolder())
 	if err != nil {
 		return nil, err
 	}

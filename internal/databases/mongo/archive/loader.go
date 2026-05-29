@@ -143,12 +143,12 @@ func (sd *StorageDownloader) ListOplogArchivesSegment(startAfter *string, endBef
 
 	if folder, ok := sd.oplogsFolder.(storage.FolderExt); !ok {
 		tracelog.WarningLogger.Printf("doesn't support ListFolderSegment %s fallback to ListFolder", sd.oplogsFolder.GetPath())
-		objects, _, err = sd.oplogsFolder.ListFolder()
+		objects, _, err = sd.oplogsFolder.ListFolder(context.Background())
 		if err != nil {
 			return nil, fmt.Errorf("can not list oplog archives folder: %w", err)
 		}
 	} else {
-		objects, _, err = folder.ListFolderSegment(startAfter, endBefore)
+		objects, _, err = folder.ListFolderSegment(context.Background(), startAfter, endBefore)
 		if err != nil {
 			return nil, fmt.Errorf("can not list oplog archives folder: %w", err)
 		}
@@ -176,7 +176,7 @@ func (sd *StorageDownloader) LastKnownArchiveTS() (models.Timestamp, error) {
 
 	if folder, ok := sd.oplogsFolder.(storage.FolderExt); !ok {
 		tracelog.WarningLogger.Printf("doesn't support ListFolderSegment %s fallback to ListFolder", sd.oplogsFolder.GetPath())
-		keys, _, err = sd.oplogsFolder.ListFolder()
+		keys, _, err = sd.oplogsFolder.ListFolder(context.Background())
 		if err != nil {
 			return models.Timestamp{}, fmt.Errorf("can not fetch keys since storage folder: %w ", err)
 		}
@@ -205,7 +205,7 @@ func findLastRecordsByStep(folder storage.FolderExt) ([]storage.Object, error) {
 	// next step is 3 month so just fallback to list all archives
 	for i := 0; i < 4; i++ {
 		tracelog.DebugLogger.Printf("try oplog prefix to find the last record: %s", keyPrefix)
-		keys, _, err := folder.ListFolderSegment(&keyPrefix, nil)
+		keys, _, err := folder.ListFolderSegment(context.Background(), &keyPrefix, nil)
 		if err != nil {
 			return nil, fmt.Errorf("can not list oplog archives folder: %w", err)
 		}
@@ -215,7 +215,7 @@ func findLastRecordsByStep(folder storage.FolderExt) ([]storage.Object, error) {
 		keyPrefix = keyPrefix[:len(keyPrefix)-1]
 	}
 	tracelog.WarningLogger.Println("fallback to ListFolder to find the last record")
-	keys, _, err := folder.ListFolder()
+	keys, _, err := folder.ListFolder(context.Background())
 	return keys, err
 }
 
@@ -365,5 +365,5 @@ func (sp *StoragePurger) DeleteOplogArchives(archives []models.Archive) error {
 		oplogKeys = append(oplogKeys, storage.NewLocalObject(arch.Filename(), time.Time{}, 0))
 	}
 	tracelog.DebugLogger.Printf("Oplog keys will be deleted: %+v\n", oplogKeys)
-	return sp.oplogsFolder.DeleteObjects(oplogKeys)
+	return sp.oplogsFolder.DeleteObjects(context.Background(), oplogKeys)
 }

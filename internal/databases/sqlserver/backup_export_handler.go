@@ -113,5 +113,5 @@ func exportSingleDatabaseBlob(ctx context.Context, blobURL string, externalFolde
 		return fmt.Errorf("unexpected proxy GET response: %d %s", resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
-	return externalFolder.PutObject(backupFile, resp.Body)
+	return externalFolder.PutObject(ctx, backupFile, resp.Body)
 }

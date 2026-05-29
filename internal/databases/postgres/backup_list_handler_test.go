@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"testing"
@@ -27,14 +28,14 @@ func TestHandleDetailedBackupList(t *testing.T) {
 	t.Run("print correct backup details in correct order", func(t *testing.T) {
 		folder := memory.NewFolder("", memory.NewKVS(memory.WithCustomTime(curTimeFunc)))
 		curTime = time.Unix(1690000000, 0)
-		_ = folder.PutObject("base_111_backup_stop_sentinel.json", &bytes.Buffer{})
-		_ = folder.PutObject("base_111/metadata.json", bytes.NewBufferString("{}"))
+		_ = folder.PutObject(context.Background(), "base_111_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "base_111/metadata.json", bytes.NewBufferString("{}"))
 		curTime = curTime.Add(time.Second)
-		_ = folder.PutObject("base_222_backup_stop_sentinel.json", &bytes.Buffer{})
-		_ = folder.PutObject("base_222/metadata.json", bytes.NewBufferString("{}"))
+		_ = folder.PutObject(context.Background(), "base_222_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "base_222/metadata.json", bytes.NewBufferString("{}"))
 		curTime = curTime.Add(time.Second)
-		_ = folder.PutObject("base_333_backup_stop_sentinel.json", &bytes.Buffer{})
-		_ = folder.PutObject("base_333/metadata.json", bytes.NewBufferString("{}"))
+		_ = folder.PutObject(context.Background(), "base_333_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "base_333/metadata.json", bytes.NewBufferString("{}"))
 
 		rescueStdout := os.Stdout
 		r, w, _ := os.Pipe()
@@ -125,11 +126,11 @@ func TestHandleDetailedBackupList(t *testing.T) {
 		require.NoError(t, err)
 
 		curTime = time.Unix(1690000000, 0)
-		_ = memFolders["storage_1"].PutObject("base_111_backup_stop_sentinel.json", &bytes.Buffer{})
-		_ = memFolders["storage_1"].PutObject("base_111/metadata.json", bytes.NewBufferString("{}"))
+		_ = memFolders["storage_1"].PutObject(context.Background(), "base_111_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = memFolders["storage_1"].PutObject(context.Background(), "base_111/metadata.json", bytes.NewBufferString("{}"))
 		curTime = curTime.Add(time.Second)
-		_ = memFolders["storage_2"].PutObject("base_111_backup_stop_sentinel.json", &bytes.Buffer{})
-		_ = memFolders["storage_2"].PutObject("base_111/metadata.json", bytes.NewBufferString("{}"))
+		_ = memFolders["storage_2"].PutObject(context.Background(), "base_111_backup_stop_sentinel.json", &bytes.Buffer{})
+		_ = memFolders["storage_2"].PutObject(context.Background(), "base_111/metadata.json", bytes.NewBufferString("{}"))
 
 		rescueStdout := os.Stdout
 		r, w, _ := os.Pipe()

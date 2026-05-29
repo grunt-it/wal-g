@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -307,7 +308,7 @@ func executeWalShow(walFilenames []string, walFolderFiles map[string]*bytes.Buff
 	putWalSegments(walFilenames, walFolder)
 
 	for name, content := range walFolderFiles {
-		_ = walFolder.PutObject(name, content)
+		_ = walFolder.PutObject(context.Background(), name, content)
 	}
 
 	mockOutputWriter := &MockWalShowOutputWriter{}
@@ -319,7 +320,7 @@ func executeWalShow(walFilenames []string, walFolderFiles map[string]*bytes.Buff
 func putWalSegments(walFilenames []string, walFolder storage.Folder) {
 	for _, name := range walFilenames {
 		// we don't use the WAL file contents so let it be it empty inside
-		_ = walFolder.PutObject(name, new(bytes.Buffer))
+		_ = walFolder.PutObject(context.Background(), name, new(bytes.Buffer))
 	}
 }
 

@@ -1,6 +1,7 @@
 package gcs
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -64,7 +65,7 @@ func TestUploadingReaderFails(t *testing.T) {
 		},
 	}
 
-	err := folder.PutObject("name", fakeReader{})
+	err := folder.PutObject(context.Background(), "name", fakeReader{})
 	assert.EqualError(t, err, `read a chunk of object "path/name" to upload to GCS: failed to fake read`)
 }
 

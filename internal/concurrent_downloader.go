@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -42,7 +43,7 @@ func (downloader *ConcurrentDownloader) Download(backupName, localDirectory stri
 }
 
 func (downloader *ConcurrentDownloader) getTarsToExtract(tarsFolder storage.Folder, filter map[string]struct{}) ([]ReaderMaker, error) {
-	tarObjects, subFolders, err := tarsFolder.ListFolder()
+	tarObjects, subFolders, err := tarsFolder.ListFolder(context.Background())
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to list '%s'", tarsFolder.GetPath())
 	}

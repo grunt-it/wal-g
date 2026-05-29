@@ -57,7 +57,7 @@ func (uploader *SplitStreamUploader) PushStream(ctx context.Context, stream io.R
 						return err
 					}
 					if read.Load() == 0 {
-						err = uploader.Folder().DeleteObjects([]storage.Object{storage.NewLocalObject(dstPath, time.Time{}, 0)})
+						err = uploader.Folder().DeleteObjects(ctx, []storage.Object{storage.NewLocalObject(dstPath, time.Time{}, 0)})
 						return err
 					}
 					idx++

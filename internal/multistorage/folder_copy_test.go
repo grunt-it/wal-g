@@ -2,6 +2,7 @@ package multistorage
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"testing"
 
@@ -17,7 +18,7 @@ func TestCopyObject(t *testing.T) {
 		folder := newTestFolder(t)
 		folder.policies.Copy = policies.CopyPolicyFirst
 
-		err := folder.CopyObject("a/b/c/file", "file2")
+		err := folder.CopyObject(context.Background(), "a/b/c/file", "file2")
 		assert.ErrorIs(t, err, ErrNoUsedStorages)
 	})
 
@@ -25,20 +26,20 @@ func TestCopyObject(t *testing.T) {
 		folder := newTestFolder(t, "s1", "s2")
 		folder.policies.Copy = policies.CopyPolicyFirst
 
-		_ = folder.usedFolders[0].PutObject("a/b/c/file1", bytes.NewBufferString("abc"))
-		_ = folder.usedFolders[1].PutObject("a/b/c/file1", bytes.NewBufferString("abc"))
+		_ = folder.usedFolders[0].PutObject(context.Background(), "a/b/c/file1", bytes.NewBufferString("abc"))
+		_ = folder.usedFolders[1].PutObject(context.Background(), "a/b/c/file1", bytes.NewBufferString("abc"))
 
-		err := folder.CopyObject("a/b/c/file1", "file2")
+		err := folder.CopyObject(context.Background(), "a/b/c/file1", "file2")
 		require.NoError(t, err)
 
 		for _, file := range []string{"a/b/c/file1", "file2"} {
-			reader, err := folder.usedFolders[0].ReadObject(file)
+			reader, err := folder.usedFolders[0].ReadObject(context.Background(), file)
 			require.NoError(t, err)
 			content, _ := io.ReadAll(reader)
 			assert.Equal(t, "abc", string(content))
 		}
 
-		_, err = folder.usedFolders[1].ReadObject("file2")
+		_, err = folder.usedFolders[1].ReadObject(context.Background(), "file2")
 		assert.ErrorAs(t, err, &storage.ObjectNotFoundError{})
 	})
 
@@ -46,15 +47,15 @@ func TestCopyObject(t *testing.T) {
 		folder := newTestFolder(t, "s1", "s2")
 		folder.policies.Copy = policies.CopyPolicyAll
 
-		_ = folder.usedFolders[0].PutObject("a/b/c/file1", bytes.NewBufferString("abc"))
-		_ = folder.usedFolders[1].PutObject("a/b/c/file1", bytes.NewBufferString("abc"))
+		_ = folder.usedFolders[0].PutObject(context.Background(), "a/b/c/file1", bytes.NewBufferString("abc"))
+		_ = folder.usedFolders[1].PutObject(context.Background(), "a/b/c/file1", bytes.NewBufferString("abc"))
 
-		err := folder.CopyObject("a/b/c/file1", "file2")
+		err := folder.CopyObject(context.Background(), "a/b/c/file1", "file2")
 		require.NoError(t, err)
 
 		for storageIdx := 0; storageIdx < 2; storageIdx++ {
 			for _, file := range []string{"a/b/c/file1", "file2"} {
-				reader, err := folder.usedFolders[storageIdx].ReadObject(file)
+				reader, err := folder.usedFolders[storageIdx].ReadObject(context.Background(), file)
 				require.NoError(t, err)
 				content, _ := io.ReadAll(reader)
 				assert.Equal(t, "abc", string(content))
@@ -66,7 +67,7 @@ func TestCopyObject(t *testing.T) {
 		folder := newTestFolder(t, "s1", "s2")
 		folder.policies.Copy = policies.CopyPolicyAll
 
-		err := folder.CopyObject("a/b/c/file1", "file2")
+		err := folder.CopyObject(context.Background(), "a/b/c/file1", "file2")
 		require.ErrorAs(t, err, &storage.ObjectNotFoundError{})
 	})
 
@@ -74,9 +75,9 @@ func TestCopyObject(t *testing.T) {
 		folder := newTestFolder(t, "s1", "s2")
 		folder.policies.Copy = policies.CopyPolicyAll
 
-		_ = folder.usedFolders[1].PutObject("a/b/c/file1", bytes.NewBufferString("abc"))
+		_ = folder.usedFolders[1].PutObject(context.Background(), "a/b/c/file1", bytes.NewBufferString("abc"))
 
-		err := folder.CopyObject("a/b/c/file1", "file2")
+		err := folder.CopyObject(context.Background(), "a/b/c/file1", "file2")
 		require.NoError(t, err)
 	})
 }

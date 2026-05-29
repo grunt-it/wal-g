@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -35,7 +36,7 @@ func (dto *BinlogSentinelDto) String() string {
 }
 
 func FetchBinlogSentinel(folder storage.Folder, sentinelDto interface{}) error {
-	reader, err := folder.ReadObject(BinlogSentinelPath)
+	reader, err := folder.ReadObject(context.Background(), BinlogSentinelPath)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func UploadBinlogSentinel(folder storage.Folder, sentinelDto interface{}) error 
 		return internal.NewSentinelMarshallingError(sentinelName, err)
 	}
 
-	return folder.PutObject(sentinelName, bytes.NewReader(dtoBody))
+	return folder.PutObject(context.Background(), sentinelName, bytes.NewReader(dtoBody))
 }
 
 func GetBinlogPreviousGTIDs(filename string, flavor string) (mysql.GTIDSet, error) {
@@ -152,7 +153,7 @@ func GetBinlogStartTimestamp(filename string, flavor string) (time.Time, error) 
 
 func GetBinlogTS(folder storage.Folder, binlogName string) (time.Time, error) {
 	logFolder := folder.GetSubFolder(BinlogPath)
-	logFiles, _, err := logFolder.ListFolder()
+	logFiles, _, err := logFolder.ListFolder(context.Background())
 	if err != nil {
 		return time.Time{}, err
 	}

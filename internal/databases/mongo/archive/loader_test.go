@@ -24,7 +24,7 @@ func TestStorageUploader_UploadOplogArchive_ProperInterfaces(t *testing.T) {
 	defer mockCtl.Finish()
 
 	storageProv := mocks.NewMockFolder(mockCtl)
-	storageProv.EXPECT().PutObjectWithContext(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ string, content io.Reader) error {
+	storageProv.EXPECT().PutObject(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ string, content io.Reader) error {
 		if _, ok := content.(io.ReaderAt); !ok {
 			t.Errorf("can not cast PutObject content to io.ReaderAt")
 		}
@@ -58,7 +58,7 @@ func TestStorageDownloaderListOplogArchivesSegmentFallsBackToListFolder(t *testi
 	arch := mustArchive(t, models.Timestamp{TS: 100, Inc: 1}, models.Timestamp{TS: 130, Inc: 1})
 	folder := mocks.NewMockFolder(mockCtl)
 	folder.EXPECT().GetPath().Return(models.OplogArchBasePath).AnyTimes()
-	folder.EXPECT().ListFolder().Return(
+	folder.EXPECT().ListFolder(gomock.Any()).Return(
 		[]storage.Object{storage.NewLocalObject(arch.Filename(), time.Time{}, 0)},
 		nil,
 		nil,
@@ -84,14 +84,14 @@ func TestStorageDownloaderLastKnownArchiveTSUsesSegmentResults(t *testing.T) {
 	arch := mustArchive(t, models.Timestamp{TS: 100, Inc: 1}, models.Timestamp{TS: 130, Inc: 1})
 	folder := mocks.NewMockFolderExt(mockCtl)
 	var segmentCalls int
-	folder.EXPECT().ListFolderSegment(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
-		func(_, _ *string) ([]storage.Object, []storage.Folder, error) {
+	folder.EXPECT().ListFolderSegment(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
+		func(_ context.Context, _, _ *string) ([]storage.Object, []storage.Folder, error) {
 			segmentCalls++
 			return []storage.Object{storage.NewLocalObject(arch.Filename(), time.Time{}, 0)}, nil, nil
 		},
 	)
 	folder.EXPECT().GetPath().AnyTimes()
-	folder.EXPECT().ListFolder().Times(0)
+	folder.EXPECT().ListFolder(gomock.Any()).Times(0)
 	downloader := &StorageDownloader{oplogsFolder: folder}
 
 	got, err := downloader.LastKnownArchiveTS()

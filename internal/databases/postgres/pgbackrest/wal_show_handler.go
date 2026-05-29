@@ -2,6 +2,7 @@ package pgbackrest
 
 import (
 	"cmp"
+	"context"
 	"path"
 	"slices"
 	"strings"
@@ -83,13 +84,13 @@ func getWalSegments(filenames []string) ([]postgres.WalSegmentDescription, error
 
 func getWalFiles(archiveFolder storage.Folder) ([]string, error) {
 	var walFiles []string
-	_, walDirectories, err := archiveFolder.ListFolder()
+	_, walDirectories, err := archiveFolder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
 	for _, walDirectory := range walDirectories {
-		files, _, err := walDirectory.ListFolder()
+		files, _, err := walDirectory.ListFolder(context.Background())
 		if err != nil {
 			return nil, err
 		}

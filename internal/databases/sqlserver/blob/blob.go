@@ -3,6 +3,7 @@ package blob
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -56,7 +57,7 @@ func NewIndex(f storage.Folder) *Index {
 }
 
 func (idx *Index) Load() error {
-	reader, err := idx.folder.ReadObject(IndexFileName)
+	reader, err := idx.folder.ReadObject(context.Background(), IndexFileName)
 	if err != nil {
 		if _, ok := err.(storage.ObjectNotFoundError); ok {
 			return ErrNotFound
@@ -110,7 +111,7 @@ func (idx *Index) Save() error {
 	data, err := json.Marshal(idx)
 	idx.Unlock()
 	if err == nil {
-		err = idx.folder.PutObject(IndexFileName, bytes.NewBuffer(data))
+		err = idx.folder.PutObject(context.Background(), IndexFileName, bytes.NewBuffer(data))
 	}
 	return err
 }

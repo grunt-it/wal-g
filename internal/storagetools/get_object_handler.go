@@ -1,6 +1,7 @@
 package storagetools
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -56,7 +57,7 @@ func getTargetFilePath(dstPath string, fileName string) (string, error) {
 }
 
 func downloadObject(objectPath string, folder storage.Folder, fileWriter io.Writer, decrypt, decompress bool) error {
-	objReadCloser, err := folder.ReadObject(objectPath)
+	objReadCloser, err := folder.ReadObject(context.Background(), objectPath)
 	if err != nil {
 		return err
 	}

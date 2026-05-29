@@ -1,6 +1,7 @@
 package greenplum
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -141,7 +142,7 @@ func cleanupAOSegments(target internal.BackupObject, segFolder storage.Folder, c
 		return nil
 	}
 
-	return aoSegFolder.DeleteObjects(aoSegmentsToDelete)
+	return aoSegFolder.DeleteObjects(context.Background(), aoSegmentsToDelete)
 }
 
 func GetPermanentBackupsAndWals(rootFolder storage.Folder, contentID int) (map[postgres.PermanentObject]bool,
@@ -250,13 +251,13 @@ func cleanupPaxFiles(target internal.BackupObject, segFolder storage.Folder, con
 		return nil
 	}
 
-	return paxFolder.DeleteObjects(paxFilesToDelete)
+	return paxFolder.DeleteObjects(context.Background(), paxFilesToDelete)
 }
 
 // TODO: unit tests
 func findPaxFilesToDelete(target internal.BackupObject,
 	paxFilesToRetain map[string]struct{}, paxFolder storage.Folder) ([]storage.Object, error) {
-	paxObjects, _, err := paxFolder.ListFolder()
+	paxObjects, _, err := paxFolder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +285,7 @@ func findPaxFilesToDelete(target internal.BackupObject,
 // TODO: unit tests
 func findAoSegmentsToDelete(target internal.BackupObject,
 	aoSegmentsToRetain map[string]struct{}, aoSegFolder storage.Folder) ([]storage.Object, error) {
-	aoObjects, _, err := aoSegFolder.ListFolder()
+	aoObjects, _, err := aoSegFolder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}

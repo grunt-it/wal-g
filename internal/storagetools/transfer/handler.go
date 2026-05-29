@@ -286,13 +286,13 @@ func (h *Handler) checkRequirements(job transferJob) (ok bool, err error) {
 }
 
 func (h *Handler) copyFile(job transferJob) (newJob *transferJob, err error) {
-	content, err := h.source.ReadObject(job.key.filePath)
+	content, err := h.source.ReadObject(context.Background(), job.key.filePath)
 	if err != nil {
 		return nil, fmt.Errorf("read file from the source storage: %w", err)
 	}
 	defer utility.LoggedClose(content, "close object content read from the source storage")
 
-	err = h.target.PutObject(job.key.filePath, content)
+	err = h.target.PutObject(context.Background(), job.key.filePath, content)
 	if err != nil {
 		return nil, fmt.Errorf("write file to the target storage: %w", err)
 	}
@@ -355,7 +355,7 @@ func (h *Handler) checkForAppearance(prevCheck time.Time, filePath string) (appe
 		time.Sleep(waitTime)
 	}
 
-	appeared, err = h.target.Exists(filePath)
+	appeared, err = h.target.Exists(context.Background(), filePath)
 	if err != nil {
 		return false, fmt.Errorf("check if file exists in the target storage: %w", err)
 	}
@@ -363,7 +363,7 @@ func (h *Handler) checkForAppearance(prevCheck time.Time, filePath string) (appe
 }
 
 func (h *Handler) deleteFile(job transferJob) error {
-	err := h.source.DeleteObjects([]storage.Object{storage.NewLocalObject(job.key.filePath, time.Time{}, 0)})
+	err := h.source.DeleteObjects(context.Background(), []storage.Object{storage.NewLocalObject(job.key.filePath, time.Time{}, 0)})
 	if err != nil {
 		return fmt.Errorf("delete file from the source storage: %w", err)
 	}

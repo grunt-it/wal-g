@@ -1,6 +1,7 @@
 package greenplum
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -45,7 +46,7 @@ func LoadStorageAoFiles(baseBackupsFolder storage.Folder) (map[string]struct{}, 
 }
 
 func iterateStorageAoFilesWithFunc(baseBackupsFolder storage.Folder, iterateFunc func(string, BackupAOFileDesc)) error {
-	backupObjects, _, err := baseBackupsFolder.ListFolder()
+	backupObjects, _, err := baseBackupsFolder.ListFolder(context.Background())
 	if err != nil {
 		return err
 	}

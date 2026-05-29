@@ -336,7 +336,7 @@ func getLogBackupURL(logBackupName, dbname string) string {
 
 func doesLogBackupContainDB(folder storage.Folder, logBakupName string, dbname string) (bool, error) {
 	f := folder.GetSubFolder(utility.WalPath).GetSubFolder(logBakupName)
-	_, dbDirs, err := f.ListFolder()
+	_, dbDirs, err := f.ListFolder(context.Background())
 	if err != nil {
 		return false, err
 	}
@@ -346,7 +346,7 @@ func doesLogBackupContainDB(folder storage.Folder, logBakupName string, dbname s
 }
 
 func listBackupBlobs(folder storage.Folder) ([]string, error) {
-	ok, err := folder.Exists(blob.IndexFileName)
+	ok, err := folder.Exists(context.Background(), blob.IndexFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ func listBackupBlobs(folder storage.Folder) ([]string, error) {
 		// old-style single blob backup
 		return nil, nil
 	}
-	_, blobDirs, err := folder.ListFolder()
+	_, blobDirs, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +375,7 @@ func getLogsSinceBackup(folder storage.Folder, backupName string, stopAt time.Ti
 	}
 	startTS := backupName[len(utility.BackupNamePrefix):]
 	endTS := stopAt.Format(utility.BackupTimeFormat)
-	_, logBackups, err := folder.GetSubFolder(utility.WalPath).ListFolder()
+	_, logBackups, err := folder.GetSubFolder(utility.WalPath).ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}

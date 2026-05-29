@@ -2,6 +2,7 @@ package storage_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"slices"
 	"sort"
@@ -27,10 +28,10 @@ func TestListFolderRecursively(t *testing.T) {
 		"subfolder2/d",
 	}
 	for _, relativePath := range paths {
-		err := folder.PutObject(relativePath, &bytes.Buffer{})
+		err := folder.PutObject(context.Background(), relativePath, &bytes.Buffer{})
 		assert.NoError(t, err)
 	}
-	fullPathObjects, err := storage.ListFolderRecursively(folder)
+	fullPathObjects, err := storage.ListFolderRecursively(context.Background(), folder)
 	assert.NoError(t, err)
 	for _, relativePath := range paths {
 		assert.True(t, slices.ContainsFunc(fullPathObjects, func(o storage.Object) bool {
@@ -53,7 +54,7 @@ func TestListFolderRecursivelyWithFilter(t *testing.T) {
 	}
 
 	for _, name := range includedObjNames {
-		_ = folder.PutObject(name, &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), name, &bytes.Buffer{})
 	}
 
 	excludedObjNames := []string{
@@ -64,14 +65,14 @@ func TestListFolderRecursivelyWithFilter(t *testing.T) {
 	}
 
 	for _, name := range excludedObjNames {
-		_ = folder.PutObject(name, &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), name, &bytes.Buffer{})
 	}
 
 	filterFunc := func(path string) bool {
 		return !strings.HasPrefix(path, "basebackups_005/base_456/tar_partitions")
 	}
 
-	filtered, err := storage.ListFolderRecursivelyWithFilter(folder, filterFunc)
+	filtered, err := storage.ListFolderRecursivelyWithFilter(context.Background(), folder, filterFunc)
 
 	filteredNames := make([]string, 0)
 
@@ -112,7 +113,7 @@ func TestListFolderRecursivelyWithFilter_MultiStorage(t *testing.T) {
 	}
 
 	for _, name := range includedObjNames {
-		_ = folder.PutObject(name, &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), name, &bytes.Buffer{})
 	}
 
 	excludedObjNames := []string{
@@ -123,14 +124,14 @@ func TestListFolderRecursivelyWithFilter_MultiStorage(t *testing.T) {
 	}
 
 	for _, name := range excludedObjNames {
-		_ = folder.PutObject(name, &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), name, &bytes.Buffer{})
 	}
 
 	filterFunc := func(path string) bool {
 		return !strings.HasPrefix(path, "basebackups_005/base_456/tar_partitions")
 	}
 
-	filtered, err := storage.ListFolderRecursivelyWithFilter(folder, filterFunc)
+	filtered, err := storage.ListFolderRecursivelyWithFilter(context.Background(), folder, filterFunc)
 
 	filteredNames := make([]string, 0)
 
@@ -158,17 +159,17 @@ func TestListFolderRecursivelyWithPrefix(t *testing.T) {
 
 	t.Run("list single file with prefix name if exists", func(t *testing.T) {
 		folder := memory.NewFolder("memory/", memory.NewKVS())
-		_ = folder.PutObject("a/b/c/123", &bytes.Buffer{})
-		_ = folder.PutObject("a/b/c/123/waste1", &bytes.Buffer{})
-		_ = folder.PutObject("a/b/c/123/waste2/waste3", &bytes.Buffer{})
-		files, err := storage.ListFolderRecursivelyWithPrefix(folder, "a/b/c/123")
+		_ = folder.PutObject(context.Background(), "a/b/c/123", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/b/c/123/waste1", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/b/c/123/waste2/waste3", &bytes.Buffer{})
+		files, err := storage.ListFolderRecursivelyWithPrefix(context.Background(), folder, "a/b/c/123")
 		assert.NoError(t, err)
 		assertFiles(t, files, []string{"a/b/c/123"})
 
-		_ = folder.PutObject("a", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a", &bytes.Buffer{})
 
 		for _, prefix := range []string{"a", "/a"} {
-			files, err = storage.ListFolderRecursivelyWithPrefix(folder, prefix)
+			files, err = storage.ListFolderRecursivelyWithPrefix(context.Background(), folder, prefix)
 			assert.NoError(t, err)
 			assertFiles(t, files, []string{"a"})
 		}
@@ -176,14 +177,14 @@ func TestListFolderRecursivelyWithPrefix(t *testing.T) {
 
 	t.Run("list all files in dir with prefix name", func(t *testing.T) {
 		folder := memory.NewFolder("memory/", memory.NewKVS())
-		_ = folder.PutObject("waste1", &bytes.Buffer{})
-		_ = folder.PutObject("a/111", &bytes.Buffer{})
-		_ = folder.PutObject("a/b/222", &bytes.Buffer{})
-		_ = folder.PutObject("a/b/c/333", &bytes.Buffer{})
-		_ = folder.PutObject("b/waste2", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "waste1", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/111", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/b/222", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/b/c/333", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "b/waste2", &bytes.Buffer{})
 
 		for _, prefix := range []string{"a", "a/", "/a", "/a/"} {
-			files, err := storage.ListFolderRecursivelyWithPrefix(folder, prefix)
+			files, err := storage.ListFolderRecursivelyWithPrefix(context.Background(), folder, prefix)
 			assert.NoError(t, err)
 			assertFiles(t, files, []string{"a/111", "a/b/222", "a/b/c/333"})
 		}
@@ -191,13 +192,13 @@ func TestListFolderRecursivelyWithPrefix(t *testing.T) {
 
 	t.Run("list all files for empty prefix", func(t *testing.T) {
 		folder := memory.NewFolder("memory/", memory.NewKVS())
-		_ = folder.PutObject("000", &bytes.Buffer{})
-		_ = folder.PutObject("a/111", &bytes.Buffer{})
-		_ = folder.PutObject("a/b/222", &bytes.Buffer{})
-		_ = folder.PutObject("b/333", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "000", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/111", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/b/222", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "b/333", &bytes.Buffer{})
 
 		for _, prefix := range []string{"", "/"} {
-			files, err := storage.ListFolderRecursivelyWithPrefix(folder, prefix)
+			files, err := storage.ListFolderRecursivelyWithPrefix(context.Background(), folder, prefix)
 			assert.NoError(t, err)
 			assertFiles(t, files, []string{"000", "a/111", "a/b/222", "b/333"})
 		}
@@ -205,12 +206,12 @@ func TestListFolderRecursivelyWithPrefix(t *testing.T) {
 
 	t.Run("dont list files and dirs with names starting with prefix", func(t *testing.T) {
 		folder := memory.NewFolder("memory/", memory.NewKVS())
-		_ = folder.PutObject("a_waste1", &bytes.Buffer{})
-		_ = folder.PutObject("a/111", &bytes.Buffer{})
-		_ = folder.PutObject("a/b/222", &bytes.Buffer{})
-		_ = folder.PutObject("a_waste2/333", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a_waste1", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/111", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a/b/222", &bytes.Buffer{})
+		_ = folder.PutObject(context.Background(), "a_waste2/333", &bytes.Buffer{})
 
-		files, err := storage.ListFolderRecursivelyWithPrefix(folder, "a")
+		files, err := storage.ListFolderRecursivelyWithPrefix(context.Background(), folder, "a")
 		assert.NoError(t, err)
 		assertFiles(t, files, []string{"a/111", "a/b/222"})
 	})
@@ -397,10 +398,10 @@ func TestGlob(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			var folder = memory.NewFolder("", memory.NewKVS())
 			for _, relativePath := range tc.paths {
-				err := folder.PutObject(relativePath, &bytes.Buffer{})
+				err := folder.PutObject(context.Background(), relativePath, &bytes.Buffer{})
 				assert.NoError(t, err)
 			}
-			objects, folders, err := storage.Glob(folder, tc.pattern)
+			objects, folders, err := storage.Glob(context.Background(), folder, tc.pattern)
 			matches := append(objects, folders...)
 			sort.Strings(tc.expected)
 			sort.Strings(matches)

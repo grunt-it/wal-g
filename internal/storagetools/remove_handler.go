@@ -1,6 +1,7 @@
 package storagetools
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func HandleRemove(prefix string, folder storage.Folder) error {
-	objects, err := storage.ListFolderRecursivelyWithPrefix(folder, prefix)
+	objects, err := storage.ListFolderRecursivelyWithPrefix(context.Background(), folder, prefix)
 	if err != nil {
 		return fmt.Errorf("list files by prefix: %w", err)
 	}
@@ -17,7 +18,7 @@ func HandleRemove(prefix string, folder storage.Folder) error {
 		return fmt.Errorf("object or folder %q does not exist", prefix)
 	}
 
-	err = folder.DeleteObjects(objects)
+	err = folder.DeleteObjects(context.Background(), objects)
 	if err != nil {
 		return fmt.Errorf("delete objects by the prefix: %v", err)
 	}
@@ -25,7 +26,7 @@ func HandleRemove(prefix string, folder storage.Folder) error {
 }
 
 func HandleRemoveWithGlobPattern(pattern string, folder storage.Folder) error {
-	objectPaths, folderPaths, err := storage.Glob(folder, pattern)
+	objectPaths, folderPaths, err := storage.Glob(context.Background(), folder, pattern)
 	if err != nil {
 		return err
 	}
@@ -47,7 +48,7 @@ func HandleRemoveWithGlobPattern(pattern string, folder storage.Folder) error {
 
 func HandleRemoveVersion(key string, versionID string, folder storage.Folder) error {
 	obj := storage.NewLocalObjectWithVersion(key, time.Time{}, 0, versionID, "")
-	err := folder.DeleteObjects([]storage.Object{obj})
+	err := folder.DeleteObjects(context.Background(), []storage.Object{obj})
 	if err != nil {
 		return fmt.Errorf("delete object %q version %q: %w", key, versionID, err)
 	}

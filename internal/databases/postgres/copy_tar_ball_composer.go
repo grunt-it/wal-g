@@ -172,7 +172,7 @@ func (c *CopyTarBallComposer) copyTar(tarName string) error {
 	c.copyCount++
 	srcPath := path.Join(c.prevBackup.Name, internal.TarPartitionFolderName, tarName)
 	dstPath := path.Join(c.newBackupName, internal.TarPartitionFolderName, newTarName)
-	err := c.prevBackup.Folder.CopyObject(srcPath, dstPath)
+	err := c.prevBackup.Folder.CopyObject(context.Background(), srcPath, dstPath)
 	if err != nil {
 		return err
 	}

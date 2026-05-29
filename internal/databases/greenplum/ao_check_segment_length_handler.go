@@ -294,7 +294,7 @@ func (checker *AOLengthCheckSegmentHandler) getAOBackupFilesData() (map[string]i
 	rootFolder := checker.rootFolder
 	aoFolder := rootFolder.GetSubFolder(fmt.Sprintf("%s/seg%s/%s/aosegments/", utility.SegmentsPath, checker.segnum, utility.BaseBackupPath))
 
-	files, _, err := aoFolder.ListFolder()
+	files, _, err := aoFolder.ListFolder(context.Background())
 	if err != nil {
 		tracelog.ErrorLogger.Printf("failed to list s3 objects: %v", err)
 		return nil, err

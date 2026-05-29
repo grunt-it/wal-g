@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,7 +19,7 @@ func TestConfigureStorageStripsWaleFileURLPrefix(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, st)
 
-	err = st.RootFolder().PutObject("prefix-check.txt", strings.NewReader(""))
+	err = st.RootFolder().PutObject(context.Background(), "prefix-check.txt", strings.NewReader(""))
 	require.NoError(t, err)
 
 	_, statErr := os.Stat(filepath.Join(tmpDir, "prefix-check.txt"))
@@ -51,7 +52,7 @@ func TestConfigureStorageAppliesRootWraps(t *testing.T) {
 	require.True(t, wrapCalled)
 	require.NotNil(t, st)
 
-	err = st.RootFolder().PutObject("wrapped-check.txt", strings.NewReader(""))
+	err = st.RootFolder().PutObject(context.Background(), "wrapped-check.txt", strings.NewReader(""))
 	require.NoError(t, err)
 
 	_, statErr := os.Stat(filepath.Join(tmpDir, "wrapped", "wrapped-check.txt"))

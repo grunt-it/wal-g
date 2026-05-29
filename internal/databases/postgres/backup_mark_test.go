@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -252,11 +253,11 @@ func testGetBackupMetadataToUpload(
 	for backupName, backupData := range backups {
 		sentinelBytes, err := json.Marshal(backupData.sentinel)
 		assert.NoError(t, err)
-		err = baseBackupFolder.PutObject(backupName+utility.SentinelSuffix, bytes.NewReader(sentinelBytes))
+		err = baseBackupFolder.PutObject(context.Background(), backupName+utility.SentinelSuffix, bytes.NewReader(sentinelBytes))
 		assert.NoError(t, err)
 		metaBytes, err := json.Marshal(backupData.meta)
 		assert.NoError(t, err)
-		err = baseBackupFolder.PutObject(backupName+"/"+utility.MetadataFileName, bytes.NewReader(metaBytes))
+		err = baseBackupFolder.PutObject(context.Background(), backupName+"/"+utility.MetadataFileName, bytes.NewReader(metaBytes))
 		assert.NoError(t, err)
 	}
 	markHandler := internal.NewBackupMarkHandler(postgres.NewGenericMetaInteractor(), folder)

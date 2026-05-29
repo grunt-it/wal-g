@@ -35,7 +35,7 @@ func (folder *Folder) GetPath() string {
 	return folder.subPath
 }
 
-func (folder *Folder) ListFolder() (objects []storage.Object, subFolders []storage.Folder, err error) {
+func (folder *Folder) ListFolder(_ context.Context) (objects []storage.Object, subFolders []storage.Folder, err error) {
 	dirPath := path.Join(folder.rootPath, folder.subPath)
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
@@ -59,7 +59,7 @@ func (folder *Folder) ListFolder() (objects []storage.Object, subFolders []stora
 	return
 }
 
-func (folder *Folder) DeleteObjects(objectsWithRelativePaths []storage.Object) error {
+func (folder *Folder) DeleteObjects(_ context.Context, objectsWithRelativePaths []storage.Object) error {
 	for _, object := range objectsWithRelativePaths {
 		err := os.RemoveAll(folder.GetFilePath(object.GetName()))
 		if os.IsNotExist(err) {
@@ -72,7 +72,7 @@ func (folder *Folder) DeleteObjects(objectsWithRelativePaths []storage.Object) e
 	return nil
 }
 
-func (folder *Folder) Exists(objectRelativePath string) (bool, error) {
+func (folder *Folder) Exists(_ context.Context, objectRelativePath string) (bool, error) {
 	_, err := os.Stat(folder.GetFilePath(objectRelativePath))
 	if os.IsNotExist(err) {
 		return false, nil
@@ -93,7 +93,7 @@ func (folder *Folder) GetSubFolder(subFolderRelativePath string) storage.Folder 
 	return sf
 }
 
-func (folder *Folder) ReadObject(objectRelativePath string) (io.ReadCloser, error) {
+func (folder *Folder) ReadObject(_ context.Context, objectRelativePath string) (io.ReadCloser, error) {
 	filePath := folder.GetFilePath(objectRelativePath)
 	file, err := os.Open(filePath)
 	if os.IsNotExist(err) {
@@ -105,8 +105,9 @@ func (folder *Folder) ReadObject(objectRelativePath string) (io.ReadCloser, erro
 	return file, nil
 }
 
-func (folder *Folder) PutObject(name string, content io.Reader) error {
+func (folder *Folder) PutObject(ctx context.Context, name string, content io.Reader) error {
 	tracelog.DebugLogger.Printf("Put %v into %v\n", name, folder.subPath)
+	content = contextio.NewReader(ctx, content)
 	filePath := folder.GetFilePath(name)
 	randomSuffix, err := storage.NewTimestampRandomTag()
 	if err != nil {
@@ -153,12 +154,7 @@ func (folder *Folder) PutObject(name string, content io.Reader) error {
 	return nil
 }
 
-func (folder *Folder) PutObjectWithContext(ctx context.Context, name string, content io.Reader) error {
-	ctxReader := contextio.NewReader(ctx, content)
-	return folder.PutObject(name, ctxReader)
-}
-
-func (folder *Folder) CopyObject(srcPath string, dstPath string) error {
+func (folder *Folder) CopyObject(ctx context.Context, srcPath string, dstPath string) error {
 	src := path.Join(folder.rootPath, srcPath)
 	srcStat, err := os.Stat(src)
 	if errors.Is(err, os.ErrNotExist) {
@@ -174,7 +170,7 @@ func (folder *Folder) CopyObject(srcPath string, dstPath string) error {
 	if err != nil {
 		return fmt.Errorf("unable to open file to copy %q: %w", srcPath, err)
 	}
-	err = folder.PutObject(dstPath, file)
+	err = folder.PutObject(ctx, dstPath, file)
 	if err != nil {
 		return fmt.Errorf("unable to copy: %w", err)
 	}

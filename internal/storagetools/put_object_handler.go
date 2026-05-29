@@ -40,7 +40,7 @@ func HandlePutObject(
 
 func checkOverwrite(dstPath string, uploader internal.Uploader, overwrite bool) error {
 	fullPath := dstPath + "." + uploader.Compression().FileExtension()
-	exists, err := uploader.Folder().Exists(fullPath)
+	exists, err := uploader.Folder().Exists(context.Background(), fullPath)
 	if err != nil {
 		return fmt.Errorf("check object existence: %v", err)
 	}

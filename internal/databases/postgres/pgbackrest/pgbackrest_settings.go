@@ -1,6 +1,7 @@
 package pgbackrest
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -116,7 +117,7 @@ type DefaultPathSection struct {
 
 func GetArchiveName(folder storage.Folder, stanza string) (*string, error) {
 	archiveFolder := folder.GetSubFolder(WalArchivePath).GetSubFolder(stanza)
-	ioReader, err := archiveFolder.ReadObject(ArchiveInfo)
+	ioReader, err := archiveFolder.ReadObject(context.Background(), ArchiveInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +143,7 @@ func GetArchiveName(folder storage.Folder, stanza string) (*string, error) {
 
 func LoadBackupsSettings(folder storage.Folder, stanza string) ([]BackupSettings, error) {
 	backupFolder := folder.GetSubFolder(BackupPath).GetSubFolder(stanza)
-	ioReader, err := backupFolder.ReadObject(BackupInfoIni)
+	ioReader, err := backupFolder.ReadObject(context.Background(), BackupInfoIni)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +175,7 @@ func LoadBackupsSettings(folder storage.Folder, stanza string) ([]BackupSettings
 
 func LoadManifest(folder storage.Folder, stanza string, backupName string) (*ManifestSettings, error) {
 	backupFolder := folder.GetSubFolder(BackupPath).GetSubFolder(stanza).GetSubFolder(backupName)
-	ioReader, err := backupFolder.ReadObject(BackupManifestIni)
+	ioReader, err := backupFolder.ReadObject(context.Background(), BackupManifestIni)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
@@ -117,7 +118,7 @@ func getServerUUID(db *sql.DB, flavor string) (string, error) {
 }
 
 func getLastUploadedBinlog(folder storage.Folder) (string, error) {
-	logFiles, _, err := folder.GetSubFolder(BinlogPath).ListFolder()
+	logFiles, _, err := folder.GetSubFolder(BinlogPath).ListFolder(context.Background())
 	if err != nil {
 		return "", err
 	}
@@ -137,7 +138,7 @@ func getLastUploadedBinlog(folder storage.Folder) (string, error) {
 
 func getLastUploadedBinlogBeforeGTID(folder storage.Folder, gtid gomysql.GTIDSet, flavor string) (string, error) {
 	folder = folder.GetSubFolder(BinlogPath)
-	logFiles, _, err := folder.ListFolder()
+	logFiles, _, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return "", err
 	}
@@ -322,7 +323,7 @@ func getBinlogSinceTS(folder storage.Folder, backup internal.Backup) (time.Time,
 	tracelog.InfoLogger.Printf("Backup sentinel: %s", streamSentinel.String())
 
 	// case when backup was uploaded before first binlog
-	sentinels, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder()
+	sentinels, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder(context.Background())
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -335,7 +336,7 @@ func getBinlogSinceTS(folder storage.Folder, backup internal.Backup) (time.Time,
 		}
 	}
 	// case when binlog was uploaded before backup
-	binlogs, _, err := folder.GetSubFolder(BinlogPath).ListFolder()
+	binlogs, _, err := folder.GetSubFolder(BinlogPath).ListFolder(context.Background())
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -352,7 +353,7 @@ func getBinlogSinceTS(folder storage.Folder, backup internal.Backup) (time.Time,
 
 // getLogsCoveringInterval lists the operation logs that cover the interval
 func getLogsCoveringInterval(folder storage.Folder, start time.Time, includeStart bool, endBinlogTS time.Time) ([]storage.Object, error) {
-	logFiles, _, err := folder.ListFolder()
+	logFiles, _, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}

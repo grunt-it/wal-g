@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"slices"
@@ -74,7 +75,7 @@ func GetLatestBackup(folder storage.Folder) (backup Backup, err error) {
 
 func GetSpecificBackup(folder storage.Folder, name string) (Backup, error) {
 	sentinelName := SentinelNameFromBackup(name)
-	exists, storageName, err := multistorage.Exists(folder, sentinelName)
+	exists, storageName, err := multistorage.Exists(context.Background(), folder, sentinelName)
 	if err != nil {
 		return Backup{}, fmt.Errorf("checking sentinel file %q for existence: %w", sentinelName, err)
 	}
@@ -85,7 +86,7 @@ func GetSpecificBackup(folder storage.Folder, name string) (Backup, error) {
 }
 
 func GetBackupSentinelObjects(folder storage.Folder) ([]storage.Object, error) {
-	objects, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder()
+	objects, _, err := folder.GetSubFolder(utility.BaseBackupPath).ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ func GetBackupSentinelObjects(folder storage.Folder) ([]storage.Object, error) {
 
 // GetBackups receives all backup descriptions from the folder.
 func GetBackups(folder storage.Folder) (backups []BackupTime, err error) {
-	backupObjects, _, err := folder.ListFolder()
+	backupObjects, _, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func GetBackups(folder storage.Folder) (backups []BackupTime, err error) {
 }
 
 func GetBackupsAndGarbage(folder storage.Folder) (backups []BackupTime, garbage []string, err error) {
-	backupObjects, subFolders, err := folder.ListFolder()
+	backupObjects, subFolders, err := folder.ListFolder(context.Background())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -193,7 +194,7 @@ func UnwrapLatestModifier(backupName string, folder storage.Folder) (string, err
 }
 
 func FolderSize(folder storage.Folder, path string) (int64, error) {
-	dataObjects, _, err := folder.GetSubFolder(path).ListFolder()
+	dataObjects, _, err := folder.GetSubFolder(path).ListFolder(context.Background())
 	if err != nil {
 		return 0, err
 	}
@@ -248,7 +249,7 @@ func SplitPurgingBackups(backups []TimedBackup,
 func DeleteGarbage(folder storage.Folder, garbage []string) error {
 	var objects []storage.Object
 	for _, prefix := range garbage {
-		garbageObjects, err := storage.ListFolderRecursively(folder.GetSubFolder(prefix))
+		garbageObjects, err := storage.ListFolderRecursively(context.Background(), folder.GetSubFolder(prefix))
 		if err != nil {
 			return err
 		}
@@ -263,7 +264,7 @@ func DeleteGarbage(folder storage.Folder, garbage []string) error {
 		}
 	}
 	tracelog.DebugLogger.Printf("Garbage keys will be deleted: %+v\n", objects)
-	return folder.DeleteObjects(objects)
+	return folder.DeleteObjects(context.Background(), objects)
 }
 
 // DeleteBackups purges given backups files
@@ -274,7 +275,7 @@ func DeleteBackups(folder storage.Folder, backups []string) error {
 		backupName := backups[i]
 		keys = append(keys, storage.NewLocalObject(SentinelNameFromBackup(backupName), time.Time{}, 0))
 
-		dataObjects, err := storage.ListFolderRecursively(folder.GetSubFolder(backupName))
+		dataObjects, err := storage.ListFolderRecursively(context.Background(), folder.GetSubFolder(backupName))
 		if err != nil {
 			return err
 		}
@@ -284,7 +285,7 @@ func DeleteBackups(folder storage.Folder, backups []string) error {
 	}
 
 	tracelog.DebugLogger.Printf("Backup keys will be deleted: %+v\n", keys)
-	if err := folder.DeleteObjects(keys); err != nil {
+	if err := folder.DeleteObjects(context.Background(), keys); err != nil {
 		return err
 	}
 	return nil

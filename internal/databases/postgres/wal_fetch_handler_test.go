@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"testing"
 
@@ -38,7 +39,7 @@ func TestWallFetchCachesLastDecompressor(t *testing.T) {
 		err = cw.Close()
 		assert.NoError(t, err)
 
-		assert.NoError(t, folder.PutObject(walFilename+"."+decompressor.FileExtension(), &data))
+		assert.NoError(t, folder.PutObject(context.Background(), walFilename+"."+decompressor.FileExtension(), &data))
 
 		_, err = internal.DownloadAndDecompressStorageFile(internal.NewFolderReader(folder), walFilename)
 		assert.NoError(t, err)
@@ -63,7 +64,7 @@ func TestSetLastDecompressorWorkWell(t *testing.T) {
 func TestTryDownloadWALFile_Exist(t *testing.T) {
 	expectedData := []byte("mock")
 	folder := testtools.MakeDefaultInMemoryStorageFolder().GetSubFolder(utility.WalPath)
-	folder.PutObject(WalFilename, bytes.NewBuffer(expectedData))
+	folder.PutObject(context.Background(), WalFilename, bytes.NewBuffer(expectedData))
 	archiveReader, exist, err := internal.TryDownloadFile(internal.NewFolderReader(folder), WalFilename)
 	assert.NoError(t, err)
 	assert.True(t, exist)
