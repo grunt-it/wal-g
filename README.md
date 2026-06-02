@@ -10,7 +10,7 @@
 Upstream WAL-G can encrypt backups with PGP, libsodium, or a cloud KMS — but **not
 with `age`** (it's an open feature request: [wal-g#1983](https://github.com/wal-g/wal-g/issues/1983)).
 
-grunt-it's backup/DR architecture standardises on **one asymmetric key — `age` — for
+grunt-it's backup/DR architecture standardizes on **one asymmetric key — `age` — for
 the entire backup surface** (control-plane tarballs, WAL segments, and Postgres base
 backups). `age` is the right primitive for us because:
 

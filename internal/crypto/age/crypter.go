@@ -5,7 +5,7 @@
 //
 //	Upstream WAL-G ships PGP, libsodium and KMS crypters but NOT age
 //	(feature request: https://github.com/wal-g/wal-g/issues/1983). grunt-it's
-//	backup/DR design standardises on ONE asymmetric key — age — across the whole
+//	backup/DR design standardizes on ONE asymmetric key — age — across the whole
 //	backup surface (control-plane tarballs + WAL segments + base backups), so the
 //	host holds only the PUBLIC recipient and cannot decrypt what it uploads. age
 //	is the natural primitive for that, and crucially supports MULTIPLE recipients,
@@ -125,7 +125,7 @@ func (crypter *Crypter) Decrypt(reader io.Reader) (io.Reader, error) {
 }
 
 // recipients parses every configured recipient. Inline and file sources are both
-// honoured (inline first, then file) so a deployment can layer them; each non-empty,
+// honored (inline first, then file) so a deployment can layer them; each non-empty,
 // non-comment line is parsed as an age recipient (X25519 or SSH).
 func (crypter *Crypter) recipients() ([]age.Recipient, error) {
 	var raw strings.Builder

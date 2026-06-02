@@ -301,15 +301,9 @@ func ConfigureCrypterForSpecificConfig(config *viper.Viper) (crypto.Crypter, err
 	libsodiumKey := config.IsSet(conf.LibsodiumKeySetting)
 	libsodiumKeyPath := config.IsSet(conf.LibsodiumKeyPathSetting)
 
-	ageRecipient := config.IsSet(conf.AgeRecipientSetting)
-	ageRecipientPath := config.IsSet(conf.AgeRecipientPathSetting)
-	ageIdentity := config.IsSet(conf.AgeIdentitySetting)
-	ageIdentityPath := config.IsSet(conf.AgeIdentityPathSetting)
-
 	isPgpKey := pgpKey || pgpKeyPath || legacyGpg
 	isEnvelopePgpKey := envelopePgpKey || envelopePgpKeyPath
 	isLibsodium := libsodiumKey || libsodiumKeyPath
-	isAge := ageRecipient || ageRecipientPath || ageIdentity || ageIdentityPath
 
 	if isPgpKey && isEnvelopePgpKey {
 		return nil, errors.New("there is no way to configure plain gpg and envelope gpg at the same time, please choose one")
@@ -326,11 +320,19 @@ func ConfigureCrypterForSpecificConfig(config *viper.Viper) (crypto.Crypter, err
 		return yckms.YcCrypterFromKeyIDAndCredential(config.GetString(conf.YcKmsKeyIDSetting), config.GetString(conf.YcSaKeyFileSetting)), nil
 	case isLibsodium:
 		return configureLibsodiumCrypter(config)
-	case isAge:
+	case ageCrypterConfigured(config):
 		return configureAgeCrypter(config)
 	default:
 		return nil, nil
 	}
+}
+
+// ageCrypterConfigured reports whether any age setting is present (grunt-it fork).
+func ageCrypterConfigured(config *viper.Viper) bool {
+	return config.IsSet(conf.AgeRecipientSetting) ||
+		config.IsSet(conf.AgeRecipientPathSetting) ||
+		config.IsSet(conf.AgeIdentitySetting) ||
+		config.IsSet(conf.AgeIdentityPathSetting)
 }
 
 // configureAgeCrypter builds an age crypter (grunt-it fork — wal-g#1983).
