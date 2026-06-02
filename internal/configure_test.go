@@ -1,12 +1,15 @@
 package internal_test
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"testing"
 
+	"filippo.io/age"
 	"github.com/wal-g/wal-g/internal/compression/lz4"
 	"github.com/wal-g/wal-g/internal/compression/lzma"
 	"github.com/wal-g/wal-g/internal/config"
@@ -154,6 +157,48 @@ func TestConfigureCompressor_FailsOnInvalidCompressorString(t *testing.T) {
 	compressor, err := internal.ConfigureCompressor()
 	assert.Error(t, err)
 	assert.Equal(t, compressor, nil)
+	resetToDefaults()
+}
+
+// TestConfigureCrypter_AgeMultiRecipient asserts the grunt-it age crypter is
+// selected from WALG_AGE_* settings AND that a blob encrypted to two recipients
+// round-trips with EITHER identity — the end-to-end wiring proof for wal-g#1983.
+func TestConfigureCrypter_AgeMultiRecipient(t *testing.T) {
+	humanID, err := age.GenerateX25519Identity()
+	assert.NoError(t, err)
+	drillID, err := age.GenerateX25519Identity()
+	assert.NoError(t, err)
+
+	dir := t.TempDir()
+	recipientFile := filepath.Join(dir, "age-recipient.pub")
+	contents := humanID.Recipient().String() + "\n" + drillID.Recipient().String() + "\n"
+	assert.NoError(t, os.WriteFile(recipientFile, []byte(contents), 0o644))
+
+	// Upload-side crypter: recipient file only.
+	viper.Set(config.AgeRecipientPathSetting, recipientFile)
+	crypter, err := internal.ConfigureCrypterForSpecificConfig(viper.GetViper())
+	assert.NoError(t, err)
+	assert.NotNil(t, crypter)
+	assert.Equal(t, "age", crypter.Name())
+
+	var buf bytes.Buffer
+	w, err := crypter.Encrypt(&buf)
+	assert.NoError(t, err)
+	_, err = w.Write([]byte("walg-age-wiring-marker"))
+	assert.NoError(t, err)
+	assert.NoError(t, w.Close())
+	resetToDefaults()
+
+	// Download-side crypter with the DRILL identity decrypts the same blob.
+	viper.Set(config.AgeIdentitySetting, drillID.String())
+	dcrypter, err := internal.ConfigureCrypterForSpecificConfig(viper.GetViper())
+	assert.NoError(t, err)
+	assert.Equal(t, "age", dcrypter.Name())
+	r, err := dcrypter.Decrypt(bytes.NewReader(buf.Bytes()))
+	assert.NoError(t, err)
+	out, err := io.ReadAll(r)
+	assert.NoError(t, err)
+	assert.Equal(t, "walg-age-wiring-marker", string(out))
 	resetToDefaults()
 }
 

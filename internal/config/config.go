@@ -32,41 +32,48 @@ const (
 	GP        = "GP"
 	ETCD      = "ETCD"
 
-	DownloadConcurrencySetting    = "WALG_DOWNLOAD_CONCURRENCY"
-	UploadConcurrencySetting      = "WALG_UPLOAD_CONCURRENCY"
-	UploadDiskConcurrencySetting  = "WALG_UPLOAD_DISK_CONCURRENCY"
-	UploadQueueSetting            = "WALG_UPLOAD_QUEUE"
-	DownloadFileRetriesSetting    = "WALG_DOWNLOAD_FILE_RETRIES"
-	SentinelUserDataSetting       = "WALG_SENTINEL_USER_DATA"
-	PreventWalOverwriteSetting    = "WALG_PREVENT_WAL_OVERWRITE"
-	UploadWalMetadata             = "WALG_UPLOAD_WAL_METADATA"
-	DeltaMaxStepsSetting          = "WALG_DELTA_MAX_STEPS"
-	DeltaOriginSetting            = "WALG_DELTA_ORIGIN"
-	CompressionMethodSetting      = "WALG_COMPRESSION_METHOD"
-	StoragePrefixSetting          = "WALG_STORAGE_PREFIX"
-	DiskRateLimitSetting          = "WALG_DISK_RATE_LIMIT"
-	NetworkRateLimitSetting       = "WALG_NETWORK_RATE_LIMIT"
-	UseWalDeltaSetting            = "WALG_USE_WAL_DELTA"
-	UseReverseUnpackSetting       = "WALG_USE_REVERSE_UNPACK"
-	SkipRedundantTarsSetting      = "WALG_SKIP_REDUNDANT_TARS"
-	VerifyPageChecksumsSetting    = "WALG_VERIFY_PAGE_CHECKSUMS"
-	StoreAllCorruptBlocksSetting  = "WALG_STORE_ALL_CORRUPT_BLOCKS"
-	UseRatingComposerSetting      = "WALG_USE_RATING_COMPOSER"
-	UseCopyComposerSetting        = "WALG_USE_COPY_COMPOSER"
-	UseDatabaseComposerSetting    = "WALG_USE_DATABASE_COMPOSER"
-	WithoutFilesMetadataSetting   = "WALG_WITHOUT_FILES_METADATA"
-	DeltaFromNameSetting          = "WALG_DELTA_FROM_NAME"
-	DeltaFromUserDataSetting      = "WALG_DELTA_FROM_USER_DATA"
-	FetchTargetUserDataSetting    = "WALG_FETCH_TARGET_USER_DATA"
-	LogLevelSetting               = "WALG_LOG_LEVEL"
-	LogDestinationSetting         = "WALG_LOG_DESTINATION"
-	TarSizeThresholdSetting       = "WALG_TAR_SIZE_THRESHOLD"
-	TarDisableFsyncSetting        = "WALG_TAR_DISABLE_FSYNC"
-	CseKmsIDSetting               = "WALG_CSE_KMS_ID"
-	CseKmsRegionSetting           = "WALG_CSE_KMS_REGION"
-	LibsodiumKeySetting           = "WALG_LIBSODIUM_KEY"
-	LibsodiumKeyPathSetting       = "WALG_LIBSODIUM_KEY_PATH"
-	LibsodiumKeyTransform         = "WALG_LIBSODIUM_KEY_TRANSFORM"
+	DownloadConcurrencySetting   = "WALG_DOWNLOAD_CONCURRENCY"
+	UploadConcurrencySetting     = "WALG_UPLOAD_CONCURRENCY"
+	UploadDiskConcurrencySetting = "WALG_UPLOAD_DISK_CONCURRENCY"
+	UploadQueueSetting           = "WALG_UPLOAD_QUEUE"
+	DownloadFileRetriesSetting   = "WALG_DOWNLOAD_FILE_RETRIES"
+	SentinelUserDataSetting      = "WALG_SENTINEL_USER_DATA"
+	PreventWalOverwriteSetting   = "WALG_PREVENT_WAL_OVERWRITE"
+	UploadWalMetadata            = "WALG_UPLOAD_WAL_METADATA"
+	DeltaMaxStepsSetting         = "WALG_DELTA_MAX_STEPS"
+	DeltaOriginSetting           = "WALG_DELTA_ORIGIN"
+	CompressionMethodSetting     = "WALG_COMPRESSION_METHOD"
+	StoragePrefixSetting         = "WALG_STORAGE_PREFIX"
+	DiskRateLimitSetting         = "WALG_DISK_RATE_LIMIT"
+	NetworkRateLimitSetting      = "WALG_NETWORK_RATE_LIMIT"
+	UseWalDeltaSetting           = "WALG_USE_WAL_DELTA"
+	UseReverseUnpackSetting      = "WALG_USE_REVERSE_UNPACK"
+	SkipRedundantTarsSetting     = "WALG_SKIP_REDUNDANT_TARS"
+	VerifyPageChecksumsSetting   = "WALG_VERIFY_PAGE_CHECKSUMS"
+	StoreAllCorruptBlocksSetting = "WALG_STORE_ALL_CORRUPT_BLOCKS"
+	UseRatingComposerSetting     = "WALG_USE_RATING_COMPOSER"
+	UseCopyComposerSetting       = "WALG_USE_COPY_COMPOSER"
+	UseDatabaseComposerSetting   = "WALG_USE_DATABASE_COMPOSER"
+	WithoutFilesMetadataSetting  = "WALG_WITHOUT_FILES_METADATA"
+	DeltaFromNameSetting         = "WALG_DELTA_FROM_NAME"
+	DeltaFromUserDataSetting     = "WALG_DELTA_FROM_USER_DATA"
+	FetchTargetUserDataSetting   = "WALG_FETCH_TARGET_USER_DATA"
+	LogLevelSetting              = "WALG_LOG_LEVEL"
+	LogDestinationSetting        = "WALG_LOG_DESTINATION"
+	TarSizeThresholdSetting      = "WALG_TAR_SIZE_THRESHOLD"
+	TarDisableFsyncSetting       = "WALG_TAR_DISABLE_FSYNC"
+	CseKmsIDSetting              = "WALG_CSE_KMS_ID"
+	CseKmsRegionSetting          = "WALG_CSE_KMS_REGION"
+	LibsodiumKeySetting          = "WALG_LIBSODIUM_KEY"
+	LibsodiumKeyPathSetting      = "WALG_LIBSODIUM_KEY_PATH"
+	LibsodiumKeyTransform        = "WALG_LIBSODIUM_KEY_TRANSFORM"
+	// age crypter (grunt-it fork — https://github.com/grunt-it/wal-g, wal-g#1983).
+	// Recipients are MULTI-LINE capable so backups can be encrypted to more than one
+	// recipient (e.g. human-escrow + a drill-scoped key); any one identity decrypts.
+	AgeRecipientSetting           = "WALG_AGE_RECIPIENT"
+	AgeRecipientPathSetting       = "WALG_AGE_RECIPIENT_FILE"
+	AgeIdentitySetting            = "WALG_AGE_IDENTITY"
+	AgeIdentityPathSetting        = "WALG_AGE_IDENTITY_FILE"
 	GpgKeyIDSetting               = "GPG_KEY_ID"
 	PgpKeySetting                 = "WALG_PGP_KEY"
 	PgpKeyPathSetting             = "WALG_PGP_KEY_PATH"
@@ -385,6 +392,10 @@ var (
 		LibsodiumKeySetting:           true,
 		LibsodiumKeyPathSetting:       true,
 		LibsodiumKeyTransform:         true,
+		AgeRecipientSetting:           true,
+		AgeRecipientPathSetting:       true,
+		AgeIdentitySetting:            true,
+		AgeIdentityPathSetting:        true,
 		TotalBgUploadedLimit:          true,
 		NameStreamCreateCmd:           true,
 		NameStreamRestoreCmd:          true,
@@ -655,6 +666,7 @@ var (
 		AlicloudAccessKeySecret:      true,
 		AlicloudSecurityToken:        true,
 		LibsodiumKeySetting:          true,
+		AgeIdentitySetting:           true,
 		PgPasswordSetting:            true,
 		PgpKeyPassphraseSetting:      true,
 		PgpKeySetting:                true,

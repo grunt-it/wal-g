@@ -20,6 +20,7 @@ import (
 	"github.com/wal-g/tracelog"
 	"github.com/wal-g/wal-g/internal/compression"
 	"github.com/wal-g/wal-g/internal/crypto"
+	ageCrypto "github.com/wal-g/wal-g/internal/crypto/age"
 	"github.com/wal-g/wal-g/internal/crypto/awskms"
 	cachenvlpr "github.com/wal-g/wal-g/internal/crypto/envelope/enveloper/cached"
 	yckmsenvlpr "github.com/wal-g/wal-g/internal/crypto/envelope/enveloper/yckms"
@@ -300,9 +301,15 @@ func ConfigureCrypterForSpecificConfig(config *viper.Viper) (crypto.Crypter, err
 	libsodiumKey := config.IsSet(conf.LibsodiumKeySetting)
 	libsodiumKeyPath := config.IsSet(conf.LibsodiumKeyPathSetting)
 
+	ageRecipient := config.IsSet(conf.AgeRecipientSetting)
+	ageRecipientPath := config.IsSet(conf.AgeRecipientPathSetting)
+	ageIdentity := config.IsSet(conf.AgeIdentitySetting)
+	ageIdentityPath := config.IsSet(conf.AgeIdentityPathSetting)
+
 	isPgpKey := pgpKey || pgpKeyPath || legacyGpg
 	isEnvelopePgpKey := envelopePgpKey || envelopePgpKeyPath
 	isLibsodium := libsodiumKey || libsodiumKeyPath
+	isAge := ageRecipient || ageRecipientPath || ageIdentity || ageIdentityPath
 
 	if isPgpKey && isEnvelopePgpKey {
 		return nil, errors.New("there is no way to configure plain gpg and envelope gpg at the same time, please choose one")
@@ -319,9 +326,25 @@ func ConfigureCrypterForSpecificConfig(config *viper.Viper) (crypto.Crypter, err
 		return yckms.YcCrypterFromKeyIDAndCredential(config.GetString(conf.YcKmsKeyIDSetting), config.GetString(conf.YcSaKeyFileSetting)), nil
 	case isLibsodium:
 		return configureLibsodiumCrypter(config)
+	case isAge:
+		return configureAgeCrypter(config)
 	default:
 		return nil, nil
 	}
+}
+
+// configureAgeCrypter builds an age crypter (grunt-it fork — wal-g#1983).
+// Recipients (for upload) and an identity (for download) are independent: an
+// upload-only host configures only WALG_AGE_RECIPIENT_FILE / WALG_AGE_RECIPIENT,
+// while a restore configures WALG_AGE_IDENTITY_FILE / WALG_AGE_IDENTITY. The
+// recipient file is MULTI-LINE (one age recipient per line).
+func configureAgeCrypter(config *viper.Viper) (crypto.Crypter, error) {
+	return ageCrypto.CrypterFromConfig(
+		config.GetString(conf.AgeRecipientSetting),
+		config.GetString(conf.AgeRecipientPathSetting),
+		config.GetString(conf.AgeIdentitySetting),
+		config.GetString(conf.AgeIdentityPathSetting),
+	), nil
 }
 
 func configurePgpCrypter(config *viper.Viper) (crypto.Crypter, error) {
