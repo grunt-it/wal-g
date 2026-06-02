@@ -31,8 +31,11 @@ jobs:
     needs: create-release
     strategy:
       matrix:
+        # grunt-it fork: we only consume the Postgres binary, so build pg only
+        # (faster/cheaper releases). The age crypter is DB-agnostic; re-add other
+        # db targets here if ever needed.
         os: [20.04, 22.04, 24.04]
-        db: [pg, mysql, sqlserver, redis, mongo, fdb, gp]
+        db: [pg]
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
       fail-fast: false
     runs-on: ${{ matrix.runner }}
