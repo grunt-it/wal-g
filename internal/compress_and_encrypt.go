@@ -29,42 +29,48 @@ func (err CompressAndEncryptError) Error() string {
 	return fmt.Sprintf(tracelog.GetErrorFormatter(), err.error)
 }
 
-// CompressAndEncrypt compresses input to a pipe reader. Output must be used or
-// pipe will block.
+// CompressAndEncrypt streams compressed and encrypted input through a pipe.
+// Writer construction runs in the producer goroutine because some crypters, including age,
+// synchronously emit a header from Encrypt. Constructing them before returning the pipe reader
+// deadlocks: the header fills an unconsumed io.Pipe before the caller can start reading.
 func CompressAndEncrypt(source io.Reader, compressor compression.Compressor, crypter crypto.Crypter) io.Reader {
 	compressedReader, dstWriter := io.Pipe()
 
-	var writeCloser io.WriteCloser = dstWriter
-	if crypter != nil {
-		var err error
-		writeCloser, err = crypter.Encrypt(dstWriter)
-
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	var compressedWriter io.WriteCloser
-	if compressor != nil {
-		writeIgnorer := &utility.EmptyWriteIgnorer{Writer: writeCloser}
-		compressedWriter = compressor.NewWriter(writeIgnorer)
-	} else {
-		compressedWriter = writeCloser
-	}
-
 	go func() {
-		if _, err := utility.FastCopy(compressedWriter, source); err != nil {
-			e := newCompressingPipeWriterError("CompressAndEncrypt: compression failed", err)
-			_ = dstWriter.CloseWithError(e)
+		var encryptedWriter io.WriteCloser = dstWriter
+		if crypter != nil {
+			var err error
+			encryptedWriter, err = crypter.Encrypt(dstWriter)
+			if err != nil {
+				e := newCompressingPipeWriterError("CompressAndEncrypt: encryption setup failed", err)
+				_ = dstWriter.CloseWithError(e)
+				return
+			}
 		}
 
-		if err := compressedWriter.Close(); err != nil {
-			e := newCompressingPipeWriterError("CompressAndEncrypt: writer close failed", err)
+		outputWriter := io.Writer(encryptedWriter)
+		var compressedWriter io.WriteCloser
+		if compressor != nil {
+			writeIgnorer := &utility.EmptyWriteIgnorer{Writer: encryptedWriter}
+			compressedWriter = compressor.NewWriter(writeIgnorer)
+			outputWriter = compressedWriter
+		}
+
+		if _, err := utility.FastCopy(outputWriter, source); err != nil {
+			e := newCompressingPipeWriterError("CompressAndEncrypt: compression failed", err)
 			_ = dstWriter.CloseWithError(e)
 			return
 		}
+
+		if compressedWriter != nil {
+			if err := compressedWriter.Close(); err != nil {
+				e := newCompressingPipeWriterError("CompressAndEncrypt: writer close failed", err)
+				_ = dstWriter.CloseWithError(e)
+				return
+			}
+		}
 		if crypter != nil {
-			if err := writeCloser.Close(); err != nil {
+			if err := encryptedWriter.Close(); err != nil {
 				e := newCompressingPipeWriterError("CompressAndEncrypt: encryption failed", err)
 				_ = dstWriter.CloseWithError(e)
 				return
