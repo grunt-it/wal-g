@@ -137,6 +137,9 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Prepare Go dependencies
+        run: make go_deps
+
       - name: Build static WAL-G
         run: make pg_build
 
