@@ -104,3 +104,62 @@ jobs:
             wal-g-${{ matrix.db }}-${{ matrix.os }}-${{ steps.determine-arch.outputs.arch }}.tar.gz.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-static:
+    needs: create-release
+    strategy:
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+      fail-fast: false
+    runs-on: ${{ matrix.runner }}
+    name: wal-g-pg-static-${{ contains(matrix.runner, 'arm') && 'aarch64' || 'amd64' }}
+    env:
+      CGO_ENABLED: 0
+      USE_BROTLI: ""
+      USE_LIBSODIUM: ""
+      USE_LZO: ""
+    steps:
+      - name: Determine arch
+        id: determine-arch
+        run: |
+          case $(uname -m) in
+            'aarch64') arch='aarch64' ;;
+            'x86_64')  arch='amd64' ;;
+            *) exit 1 ;;
+          esac
+          echo "arch=$arch" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build static WAL-G
+        run: make pg_build
+
+      - name: Verify static binary
+        run: |
+          if ldd main/pg/wal-g 2>&1 | grep -q '=>'; then exit 1; fi
+          main/pg/wal-g --version
+
+      - name: Prepare release assets
+        run: |
+          asset="wal-g-pg-static-${{ steps.determine-arch.outputs.arch }}"
+          mv main/pg/wal-g "$asset"
+          tar --owner=0 --group=0 -zcvf "$asset.tar.gz" "$asset"
+          sha256sum "$asset" > "$asset.sha256"
+          sha256sum "$asset.tar.gz" > "$asset.tar.gz.sha256"
+
+      - name: Upload static WAL-G binary
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            wal-g-pg-static-${{ steps.determine-arch.outputs.arch }}
+            wal-g-pg-static-${{ steps.determine-arch.outputs.arch }}.tar.gz
+            wal-g-pg-static-${{ steps.determine-arch.outputs.arch }}.sha256
+            wal-g-pg-static-${{ steps.determine-arch.outputs.arch }}.tar.gz.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
